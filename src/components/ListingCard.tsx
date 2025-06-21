@@ -24,6 +24,7 @@ interface Listing {
     avatar: string;
   };
   availability: string;
+  tags: string[];
 }
 
 interface ListingCardProps {
@@ -31,8 +32,6 @@ interface ListingCardProps {
 }
 
 const ListingCard = ({ listing }: ListingCardProps) => {
-  const mockTags = ["Winter", "Boots", "Extreme"]; // <-- arbitrary tags for now
-
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 overflow-hidden border-0 shadow-md hover:scale-105 flex flex-col h-[420px]">
       <div className="relative overflow-hidden">
@@ -42,9 +41,9 @@ const ListingCard = ({ listing }: ListingCardProps) => {
           className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
         />
 
-        {/* Hardcoded tags */}
+        {/* Database tags */}
         <div className="absolute top-3 left-3 flex flex-wrap gap-1 z-10">
-          {mockTags.map((tag, idx) => (
+          {listing.tags && listing.tags.slice(0, 3).map((tag, idx) => (
             <Badge key={idx} className="bg-white/90 text-gray-800 text-xs font-medium">
               {tag}
             </Badge>
