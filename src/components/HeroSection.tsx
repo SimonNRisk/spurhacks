@@ -1,8 +1,7 @@
-
-import React from 'react';
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, MapPin } from 'lucide-react';
+import { Search, MapPin } from "lucide-react";
 
 interface HeroSectionProps {
   searchQuery: string;
@@ -11,15 +10,17 @@ interface HeroSectionProps {
 
 const HeroSection = ({ searchQuery, setSearchQuery }: HeroSectionProps) => {
   return (
-    <section className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 text-white py-16">
+    <section className="text-black py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h1 className="text-4xl md:text-6xl font-bold mb-6">
-          Rent Anything, <span className="text-yellow-300">Anywhere</span>
+          Need It?<span className="text-primary"> Boro</span>{" "}
+          <span className="text-black">It.</span>
         </h1>
-        <p className="text-xl md:text-2xl mb-8 text-blue-100 max-w-3xl mx-auto">
-          From power tools to party supplies, discover thousands of items available for rent in your neighborhood
+        <p className="text-lg md:text-xl mb-8 text-black-thin max-w-3xl mx-auto">
+          From ski trips to weekend getaways, find and rent the gear you need -
+          right from your neighborhood.
         </p>
-        
+
         <div className="max-w-2xl mx-auto">
           <div className="flex flex-col sm:flex-row gap-4 bg-white rounded-lg p-2 shadow-lg">
             <div className="flex-1 relative">
@@ -40,7 +41,7 @@ const HeroSection = ({ searchQuery, setSearchQuery }: HeroSectionProps) => {
                 className="pl-10 border-0 text-gray-900 placeholder-gray-500 focus:ring-0"
               />
             </div>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8">
+            <Button className="bg-primary hover:bg-primary-dark text-white px-8">
               Search
             </Button>
           </div>
