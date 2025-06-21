@@ -1,11 +1,9 @@
 import os
 import numpy as np
-from dotenv import load_dotenv
 from openai import OpenAI
 from supabase import create_client, Client
 
-# Load environment variables from .env file
-load_dotenv(dotenv_path='./backend/.env')
+# The .env file is now loaded by main.py, so we don't need to do it here.
 
 # Initialize OpenAI client
 openai_api_key = os.getenv("OPENAI_API_KEY")
@@ -31,41 +29,38 @@ def cosine_similarity(v1, v2):
     """Calculates the cosine similarity between two vectors."""
     return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
 
-def verify_and_add_tags(new_tags: list[str]):
+def verify_and_add_tags(new_tags: list[str]) -> list[str]:
     """
     Verifies a list of new tags against existing tags in the database.
-    Adds new, non-similar tags to the database.
+    If a new tag is not similar to any existing tag, it's added to the DB.
+    Returns a cleaned list of tags, preferring existing tags over similar new ones.
     """
-    # 1. Fetch existing tags from the database
+    # 1. Fetch existing tags and their embeddings from the database
     response = supabase.table('tags').select('name').execute()
-    if not response.data:
-        existing_tags = []
-    else:
-        existing_tags = [item['name'] for item in response.data]
-
-    print(f"Existing tags: {existing_tags}")
-
+    existing_tags = [item['name'] for item in response.data] if response.data else []
+    
     if not existing_tags:
         print("No existing tags found. Adding all new tags.")
-        tags_to_add = [{'name': tag} for tag in new_tags]
-        supabase.table('tags').insert(tags_to_add).execute()
-        print(f"Added new tags: {new_tags}")
-        return
+        if new_tags:
+            tags_to_add = [{'name': tag} for tag in new_tags]
+            supabase.table('tags').insert(tags_to_add).execute()
+        return new_tags
 
-    # 2. Get embeddings for existing and new tags
     existing_tags_embeddings = {tag: get_embedding(tag) for tag in existing_tags}
-    new_tags_embeddings = {tag: get_embedding(tag) for tag in new_tags}
+    
+    verified_tags = set()
+    tags_to_add_to_db = []
 
-    tags_to_add = []
-
-    # 3. Compare each new tag with all existing tags
-    for new_tag, new_tag_embedding in new_tags_embeddings.items():
+    # 2. Compare each new tag with all existing tags
+    for new_tag in new_tags:
         if new_tag in existing_tags:
-            print(f"Tag '{new_tag}' already exists. Skipping.")
+            verified_tags.add(new_tag)
             continue
 
         max_similarity = 0
         most_similar_tag = None
+
+        new_tag_embedding = get_embedding(new_tag)
 
         for existing_tag, existing_tag_embedding in existing_tags_embeddings.items():
             similarity = cosine_similarity(new_tag_embedding, existing_tag_embedding)
@@ -73,24 +68,29 @@ def verify_and_add_tags(new_tags: list[str]):
                 max_similarity = similarity
                 most_similar_tag = existing_tag
         
-        print(f"New tag: '{new_tag}', Most similar existing tag: '{most_similar_tag}', Similarity: {max_similarity:.4f}")
-
-        if max_similarity < SIMILARITY_THRESHOLD:
-            tags_to_add.append(new_tag)
-            print(f"'{new_tag}' is not similar to any existing tags. Adding to DB.")
+        # 3. Decide whether to use an existing tag or add the new one
+        if max_similarity >= SIMILARITY_THRESHOLD:
+            # New tag is very similar to an existing one, use the existing tag
+            verified_tags.add(most_similar_tag)
+            print(f"New tag '{new_tag}' is similar to '{most_similar_tag}'. Using existing tag.")
         else:
-            print(f"'{new_tag}' is too similar to '{most_similar_tag}'. Not adding.")
+            # New tag is unique, add it to the list for DB insertion and results
+            verified_tags.add(new_tag)
+            if new_tag not in tags_to_add_to_db:
+                 tags_to_add_to_db.append(new_tag)
+            print(f"'{new_tag}' is not similar to any existing tags. Adding to DB.")
 
-    # 4. Add new tags to the database
-    if tags_to_add:
-        new_tag_records = [{'name': tag} for tag in tags_to_add]
+    # 4. Add all new unique tags to the database in a single batch
+    if tags_to_add_to_db:
+        new_tag_records = [{'name': tag} for tag in tags_to_add_to_db]
         supabase.table('tags').insert(new_tag_records).execute()
-        print(f"Added new tags: {tags_to_add}")
-    else:
-        print("No new tags to add.")
+        print(f"Added new tags to DB: {tags_to_add_to_db}")
+
+    return list(verified_tags)
 
 if __name__ == '__main__':
     # Example usage
     sample_tags = ["outdoors", "skiing", "winter sports", "mountain", "snowboarding gear"]
     print(f"Verifying sample tags: {sample_tags}")
-    verify_and_add_tags(sample_tags)
+    verified_tags = verify_and_add_tags(sample_tags)
+    print(f"Verified tags: {verified_tags}")

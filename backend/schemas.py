@@ -30,19 +30,27 @@ class Request(BaseModel):
     class Config:
         orm_mode = True
 
-class Listing(BaseModel):
-    id: int
-    created_at: datetime
+# A base model with fields common to creating and reading listings
+class ListingBase(BaseModel):
     title: str
     description: str
-    quantity: int
-    price: float  # Assuming price is a float, even if stored as varchar
-    tags: List[int] # This is a list of tag IDs
-    picture: Optional[str] = None
+    quantity: str # Changed to string to match DB varchar
+    price: float
+    picture: Optional[str] = None # This will hold the photo_path
     location: str
-    user_id: int
+    user: int # Changed from user_id to match DB
+
+# Model for creating a listing - accepts tag names
+class ListingCreate(ListingBase):
+    tags: List[str]
+
+# Model for reading/returning a listing from the DB
+class Listing(ListingBase):
+    id: int
+    created_at: datetime
+    tags: List[int] # In the DB, this is a list of IDs
     rating: Optional[float] = None
-    num_ratings: Optional[int] = None
+    num_reviews: Optional[int] = None # Changed from num_ratings to match DB
 
     class Config:
         orm_mode = True

@@ -2,12 +2,16 @@ import openai
 import os
 import sys
 import json
-from dotenv import load_dotenv
+import base64
 
-load_dotenv()
+# The .env file is now loaded by main.py, so we don't need to do it here.
 
-def classify_image(image_url: str) -> dict:
+def generate_details_from_image_bytes(image_bytes: bytes) -> dict:
+    """
+    Uses OpenAI's vision model to generate a description and tags from image bytes.
+    """
     client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    base64_image = base64.b64encode(image_bytes).decode('utf-8')
 
     response = client.chat.completions.create(
         model="gpt-4o",
@@ -18,16 +22,19 @@ def classify_image(image_url: str) -> dict:
                     {
                         "type": "text",
                         "text": (
-                            "Classify this image into tags useful for a rental app, and also give a short natural language description of the item. "
-                            "Respond only as a JSON object with two fields: 'tags' (a list of keywords) and 'description' (a string). "
-                            "Example format: {\"tags\": [\"ski\", \"winter\"], \"description\": \"These are a pair of skis...\"}"
+                            "Analyze this image of an item to be rented out. Provide a concise, appealing one-sentence description. "
+                            "Also, provide up to 5 relevant one or two-word tags for categorization. "
+                            "Respond ONLY as a JSON object with two keys: 'description' (a string) and 'tags' (a list of lowercase strings)."
                         )
                     },
-                    {"type": "image_url", "image_url": {"url": image_url}},
+                    {
+                        "type": "image_url", 
+                        "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}
+                    },
                 ],
             }
         ],
-        max_tokens=200
+        max_tokens=300
     )
 
     result_text = response.choices[0].message.content.strip()
@@ -39,13 +46,22 @@ def classify_image(image_url: str) -> dict:
             result_text = result_text[len("json"):].strip()
 
     # Parse JSON safely
-    return json.loads(result_text)
+    try:
+        return json.loads(result_text)
+    except (json.JSONDecodeError, IndexError):
+        return {"description": "Could not generate description.", "tags": []}
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python classifier.py <image_url>")
+        print("Usage: python photo_tags.py <path_to_image>")
         sys.exit(1)
 
-    image_url = sys.argv[1]
-    result = classify_image(image_url)
-    print(json.dumps(result, indent=2))
+    image_path = sys.argv[1]
+    try:
+        with open(image_path, "rb") as image_file:
+            image_bytes = image_file.read()
+            result = generate_details_from_image_bytes(image_bytes)
+            print(json.dumps(result, indent=2))
+    except FileNotFoundError:
+        print(f"Error: Image file not found at {image_path}")
+        sys.exit(1)
