@@ -1,6 +1,11 @@
 import os
 import sys
 from dotenv import load_dotenv
+from fastapi import FastAPI, File, UploadFile, HTTPException
+from pydantic import BaseModel
+from supabase import create_client, Client
+from typing import List
+import uuid
 
 # This setup block must be at the very top of the file
 # 1. Add the project root to the python path to allow absolute imports
@@ -11,11 +16,6 @@ dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
 load_dotenv(dotenv_path=dotenv_path)
 
 
-from fastapi import FastAPI, File, UploadFile, HTTPException
-from pydantic import BaseModel
-from supabase import create_client, Client
-from typing import List
-import uuid
 
 # Now that the path and env vars are set, we can import our modules
 from backend.scripts.tag_verification import verify_and_add_tags
