@@ -17,12 +17,12 @@ const Index = () => {
         searchQuery={searchQuery} 
         setSearchQuery={setSearchQuery} 
       />
-      <FilterSection 
+      {/* <FilterSection 
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
         selectedLocation={selectedLocation}
         setSelectedLocation={setSelectedLocation}
-      />
+      /> */}
       <ListingsGrid 
         searchQuery={searchQuery}
         selectedCategory={selectedCategory}

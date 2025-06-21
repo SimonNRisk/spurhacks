@@ -1,7 +1,7 @@
-
-import React, { useMemo } from 'react';
+"use client"
+import React, { useMemo, useEffect, useState } from 'react';
 import ListingCard from './ListingCard';
-import { mockListings } from '../data/mockListings';
+import { Link } from 'react-router-dom';
 
 interface ListingsGridProps {
   searchQuery: string;
@@ -10,28 +10,37 @@ interface ListingsGridProps {
 }
 
 const ListingsGrid = ({ searchQuery, selectedCategory, selectedLocation }: ListingsGridProps) => {
-  const filteredListings = useMemo(() => {
-    return mockListings.filter(listing => {
-      const matchesSearch = searchQuery === '' || 
-        listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        listing.description.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchesCategory = selectedCategory === 'all' || listing.category === selectedCategory;
-      
-      const matchesLocation = selectedLocation === 'all' || listing.location.type === selectedLocation;
-      
-      return matchesSearch && matchesCategory && matchesLocation;
-    });
-  }, [searchQuery, selectedCategory, selectedLocation]);
-
-  // Sort by distance (nearby items first)
-  const sortedListings = useMemo(() => {
-    return [...filteredListings].sort((a, b) => {
-      if (a.location.type === 'nearby' && b.location.type !== 'nearby') return -1;
-      if (b.location.type === 'nearby' && a.location.type !== 'nearby') return 1;
-      return a.location.distance - b.location.distance;
-    });
-  }, [filteredListings]);
+  const [listings, setListings] = useState([]);
+  useEffect(() => {
+    fetch('http://127.0.0.1:8000/')
+      .then(res => res.json())
+      .then(data => {
+        console.log('Fetched listings:', data);
+        const transformed = data.map(item => ({
+            id: item.id.toString(),
+            title: item.title,
+            description: item.description,
+            price: item.price,
+            priceUnit: 'day',
+            category: 'misc',
+            image: item.image_url,
+            rating: item.rating,
+            reviewCount: item.num_reviews,
+            location: {
+              name: item.location,
+              distance: Math.random() * 10,
+              type: 'city',
+            },
+            owner: {
+              name: 'John Doe', // placeholder
+              avatar: 'https://source.unsplash.com/random/100x100/?face'
+            },
+            availability: item.availability,
+          }));
+        setListings(transformed);
+      })
+      .catch(err => console.error('Error fetching listings:', err));
+  }, []);
 
   return (
     <section className="py-12">
@@ -40,19 +49,35 @@ const ListingsGrid = ({ searchQuery, selectedCategory, selectedLocation }: Listi
           <h2 className="text-2xl font-bold text-gray-900">
             Available Items {selectedLocation === 'nearby' && '(Nearby first)'}
           </h2>
-          <p className="text-gray-600">{sortedListings.length} items available</p>
+          <p className="text-gray-600">{listings.length} items available</p>
         </div>
         
-        {sortedListings.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-gray-400 text-6xl mb-4">🔍</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No items found</h3>
-            <p className="text-gray-600">Try adjusting your search or filters</p>
-          </div>
+        {listings.length === 0 ? (
+          <div className="flex items-center justify-center p-4">
+            <div className="flex flex-col items-center space-y-6">
+              {/* Enhanced spinning loader */}
+              <div className="relative">
+                {/* Outer ring */}
+                <div className="w-16 h-16 border-4 border-blue-200 rounded-full animate-pulse"></div>
+                
+                {/* Spinning ring */}
+                <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-blue-600 border-r-blue-500 rounded-full animate-spin"></div>
+              </div>
+
+              {/* Text with animated dots */}
+              <div className="text-center space-y-2">
+                <p className="text-xl font-medium text-slate-700">
+                  Loading...
+                </p>
+              </div>
+            </div>
+    </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {sortedListings.map((listing) => (
-              <ListingCard key={listing.id} listing={listing} />
+            {listings.map((listing) => (
+              <Link to={`/listings/${listing.id}`} key={listing.id}>
+                <ListingCard listing={listing} />
+              </Link>
             ))}
           </div>
         )}
