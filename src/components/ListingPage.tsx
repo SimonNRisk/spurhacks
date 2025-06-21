@@ -8,13 +8,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge";
 import { ArrowLeft, MapPin, Star, Clock, User, Calendar as CalendarIcon } from 'lucide-react';
 import { set } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+
+
 
 function ListingPage() {
 const { id } = useParams();
 const [selectedRange, setSelectedRange] = useState<{ from: Date; to?: Date }>();
 const [listing, setListing] = useState<any | null | false>(null); // null = loading, false = not found
 const [unavailableRanges, setUnavailableRanges] = useState<{ start: string; end: string }[]>([]);
-
+const [showModal, setShowModal] = useState(false);
+const [message, setMessage] = useState("");
+const navigate = useNavigate();
 const handleRangeSelect = (range: { from: Date; to?: Date } | undefined) => {
   if (!range?.from || !range?.to) {
     setSelectedRange(range);
@@ -295,7 +301,8 @@ if (listing === false) {
 
                 <Button 
                 className="w-full bg-blue-600 hover:bg-blue-700"
-                disabled={!selectedRange?.from}
+                disabled={!selectedRange?.from || !selectedRange?.to}
+                onClick={() => setShowModal(true)}
                 >
                 {selectedRange?.from
                     ? selectedRange.to
@@ -312,6 +319,70 @@ if (listing === false) {
           </div>
         </div>
       </div>
+      {showModal && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
+            <h2 className="text-lg font-semibold mb-4">Confirm Reservation</h2>
+            
+            <p className="text-sm text-gray-700 mb-2">
+                You’re booking <strong>{listing.title}</strong> from{" "}
+                <strong>{selectedRange?.from.toLocaleDateString()}</strong> to{" "}
+                <strong>{selectedRange?.to?.toLocaleDateString()}</strong>.
+            </p>
+
+            <label className="block text-sm font-medium text-gray-700 mb-1 mt-4">
+                Message to the owner:
+            </label>
+            <textarea
+                className="w-full border border-gray-300 rounded p-2 text-sm"
+                rows={4}
+                placeholder="Add a message..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+            />
+
+            <div className="mt-6 flex justify-end space-x-3">
+                <Button
+                variant="outline"
+                onClick={() => setShowModal(false)}
+                >
+                Cancel
+                </Button>
+                <Button
+                    onClick={async () => {
+                    try {
+                        const res = await fetch("http://127.0.0.1:8000/requests", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            item: listing.id,
+                            user: 1, // Replace with actual user ID
+                            start_date: selectedRange.from.toISOString().split("T")[0],
+                            end_date: selectedRange.to.toISOString().split("T")[0],
+                            message: message,
+                        }),
+                        });
+
+                        if (!res.ok) throw new Error("Failed to reserve");
+
+                        toast.success("Reservation submitted!");
+                        setShowModal(false);
+                        setTimeout(() => navigate("/"), 1000); // short delay for toast display
+                    } catch (err) {
+                        console.error(err);
+                        toast.error("Something went wrong.");
+                    }
+                    }}
+                >
+                Confirm Reservation
+                </Button>
+            </div>
+            </div>
+        </div>
+        )}
+
     </div>
   );
 };

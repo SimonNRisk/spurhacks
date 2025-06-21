@@ -1,9 +1,11 @@
 from fastapi import FastAPI
+from fastapi import HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from supabase.client import create_client, Client 
 import os
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
+from pydantic import BaseModel
 
 load_dotenv()
 url = os.getenv("SUPABASE_URL")
@@ -121,6 +123,30 @@ def get_listing_by_id(listing_id: int):
         "num_reviews": listing.get("num_reviews", 0),
         "unavailable_dates": unavailable_dates
     }
+
+class ReservationRequest(BaseModel):
+    item: int
+    user: int
+    start_date: str  # Format: 'YYYY-MM-DD'
+    end_date: str    # Format: 'YYYY-MM-DD'
+    message: str
+
+@app.post("/requests")
+def create_reservation(reservation: ReservationRequest):
+    # Insert reservation into the 'requests' table
+    response = supabase.table("requests").insert({
+        "item": reservation.item,
+        "requested_user": 1,
+        "start_date": reservation.start_date,
+        "end_date": reservation.end_date,
+        "message": reservation.message,
+        "approve": 0  # default to not approved yet
+    }).execute()
+
+    # if response.status_code != 201:
+    #     raise HTTPException(status_code=400, detail="Failed to create reservation")
+
+    return {"message": "Reservation request submitted successfully"}
 
 @app.get("/users")
 def get_users():
