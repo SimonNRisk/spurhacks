@@ -40,9 +40,9 @@ const ListingCard = ({ listing }: ListingCardProps) => {
           className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
         />
         <div className="absolute top-3 left-3">
-          {/* <Badge variant="secondary" className="bg-white/90 text-gray-700">
+          <Badge variant="secondary" className="bg-white/90 text-gray-700">
             {listing.category}
-          </Badge> */}
+          </Badge>
         </div>
         {listing.location.type === 'nearby' && (
           <div className="absolute top-3 right-3">

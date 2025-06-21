@@ -22,7 +22,7 @@ const ListingsGrid = ({ searchQuery, selectedCategory, selectedLocation }: Listi
             description: item.description,
             price: item.price,
             priceUnit: 'day',
-            category: 'misc',
+            category: item.tags[0],
             image: item.image_url,
             rating: item.rating,
             reviewCount: item.num_reviews,
