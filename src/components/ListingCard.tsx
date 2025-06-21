@@ -31,6 +31,8 @@ interface ListingCardProps {
 }
 
 const ListingCard = ({ listing }: ListingCardProps) => {
+  const mockTags = ["Winter", "Boots", "Extreme"]; // <-- arbitrary tags for now
+
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 overflow-hidden border-0 shadow-md hover:scale-105 flex flex-col h-[420px]">
       <div className="relative overflow-hidden">
@@ -39,11 +41,17 @@ const ListingCard = ({ listing }: ListingCardProps) => {
           alt={listing.title}
           className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
         />
-        <div className="absolute top-3 left-3">
-          {/* <Badge variant="secondary" className="bg-white/90 text-gray-700">
-            {listing.category}
-          </Badge> */}
+
+        {/* Hardcoded tags */}
+        <div className="absolute top-3 left-3 flex flex-wrap gap-1 z-10">
+          {mockTags.map((tag, idx) => (
+            <Badge key={idx} className="bg-white/90 text-gray-800 text-xs font-medium">
+              {tag}
+            </Badge>
+          ))}
         </div>
+
+        {/* Nearby badge */}
         {listing.location.type === 'nearby' && (
           <div className="absolute top-3 right-3">
             <Badge className="bg-green-500 text-white">Nearby</Badge>

@@ -20,7 +20,8 @@ load_dotenv(dotenv_path=dotenv_path)
 # Now that the path and env vars are set, we can import our modules
 from backend.scripts.tag_verification import verify_and_add_tags
 from backend.scripts.photo_tags import generate_details_from_image_bytes
-from backend.schemas import ListingCreate, Listing
+from backend.scripts.search_tags import classify_search_prompt
+from backend.schemas import ListingCreate, Listing, SearchPrompt, SearchResult
 
 # Initialize Supabase client using the loaded environment variables
 SUPABASE_URL=os.getenv("SUPABASE_URL")
@@ -301,5 +302,24 @@ def create_listing(listing_data: ListingCreate):
     except Exception as e:
         # Catch potential exceptions from DB or logic
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+@app.post("/search/analyze", response_model=SearchResult)
+def analyze_search_prompt(search_data: SearchPrompt):
+    """
+    Analyzes a user's search prompt and returns relevant tags, description, and location.
+    This endpoint calls the search_tags.py functionality to process natural language queries.
+    """
+    try:
+        # Call the search_tags function to analyze the prompt
+        result = classify_search_prompt(search_data.prompt)
+        
+        return SearchResult(
+            tags=result.get("tags", []),
+            description=result.get("description", ""),
+            location=result.get("location", "unknown")
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to analyze search prompt: {str(e)}")
 
 

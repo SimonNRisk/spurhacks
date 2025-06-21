@@ -1,15 +1,77 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, MapPin } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { Search, MapPin, X } from 'lucide-react';
 
 interface HeroSectionProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
 }
 
+interface SearchTag {
+  text: string;
+  id: string;
+}
+
 const HeroSection = ({ searchQuery, setSearchQuery }: HeroSectionProps) => {
+  const [tags, setTags] = useState<SearchTag[]>([]);
+  const [location, setLocation] = useState('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const analyzeSearchPrompt = async () => {
+    if (!searchQuery.trim()) return;
+    
+    setIsAnalyzing(true);
+    try {
+      const response = await fetch('http://localhost:8000/search/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt: searchQuery }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to analyze search prompt');
+      }
+
+      const data = await response.json();
+      
+      // Convert tags to SearchTag format with unique IDs
+      const newTags: SearchTag[] = data.tags.map((tag: string, index: number) => ({
+        text: tag,
+        id: `${tag}-${Date.now()}-${index}`,
+      }));
+      
+      setTags(newTags);
+      
+      // Update location if provided
+      if (data.location && data.location !== 'unknown') {
+        setLocation(data.location);
+      }
+      
+      // Clear the search query after analysis
+      setSearchQuery('');
+      
+    } catch (error) {
+      console.error('Error analyzing search prompt:', error);
+      // You might want to show a toast/notification here
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const removeTag = (tagId: string) => {
+    setTags(tags.filter(tag => tag.id !== tagId));
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      analyzeSearchPrompt();
+    }
+  };
+
   return (
     <section className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 text-white py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -21,28 +83,60 @@ const HeroSection = ({ searchQuery, setSearchQuery }: HeroSectionProps) => {
         </p>
         
         <div className="max-w-2xl mx-auto">
-          <div className="flex flex-col sm:flex-row gap-4 bg-white rounded-lg p-2 shadow-lg">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <Input
-                type="text"
-                placeholder="What do you need to rent?"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 border-0 text-gray-900 placeholder-gray-500 focus:ring-0"
-              />
+          <div className="bg-white rounded-lg p-2 shadow-lg">
+            {/* Search Input Row */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <Input
+                  type="text"
+                  placeholder="What do you need to rent?"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  className="pl-10 border-0 text-gray-900 placeholder-gray-500 focus:ring-0"
+                />
+              </div>
+              <div className="flex-1 relative">
+                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <Input
+                  type="text"
+                  placeholder="Enter location"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="pl-10 border-0 text-gray-900 placeholder-gray-500 focus:ring-0"
+                />
+              </div>
+              <Button 
+                onClick={analyzeSearchPrompt}
+                disabled={isAnalyzing || !searchQuery.trim()}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 disabled:opacity-50"
+              >
+                {isAnalyzing ? 'Analyzing...' : 'Search'}
+              </Button>
             </div>
-            <div className="flex-1 relative">
-              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <Input
-                type="text"
-                placeholder="Enter location"
-                className="pl-10 border-0 text-gray-900 placeholder-gray-500 focus:ring-0"
-              />
-            </div>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8">
-              Search
-            </Button>
+            
+            {/* Tags Display */}
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 p-2 bg-gray-50 rounded-lg">
+                {tags.map((tag) => (
+                  <Badge
+                    key={tag.id}
+                    variant="secondary"
+                    className="bg-blue-100 text-blue-800 hover:bg-blue-200 cursor-pointer flex items-center gap-1 px-3 py-1"
+                  >
+                    <span className="text-sm">{tag.text}</span>
+                    <button
+                      onClick={() => removeTag(tag.id)}
+                      className="ml-1 hover:bg-blue-300 rounded-full p-0.5 transition-colors"
+                      aria-label={`Remove ${tag.text} tag`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
