@@ -1,14 +1,13 @@
 import openai
-import sys
 import os
+from dotenv import load_dotenv
+import sys
 
-# ✅ Set your OpenAI API key securely
-openai.api_key = os.getenv("OPENAI_API_KEY")  # Recommended
-# Alternatively, uncomment and paste directly (not recommended):
-# openai.api_key = "sk-..."
+load_dotenv()
+
 
 def classify_image_tags(image_url: str) -> list:
-    client = openai.OpenAI()
+    client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     response = client.chat.completions.create(
         model="gpt-4o",
@@ -16,10 +15,7 @@ def classify_image_tags(image_url: str) -> list:
             {
                 "role": "user",
                 "content": [
-                    {
-                        "type": "text",
-                        "text": "Classify this image into tags useful for a rental app. Output only a Python list of relevant keywords."
-                    },
+                    {"type": "text", "text": "Classify this image into tags useful for a rental app. Output only a Python list of relevant keywords."},
                     {"type": "image_url", "image_url": {"url": image_url}},
                 ],
             }
@@ -27,8 +23,14 @@ def classify_image_tags(image_url: str) -> list:
         max_tokens=100
     )
 
-    result_text = response.choices[0].message.content
-    print("Raw Output:", result_text)
+    result_text = response.choices[0].message.content.strip()
+
+    # Remove code block if present
+    if result_text.startswith("```"):
+        result_text = result_text.strip("`").strip()
+        if result_text.startswith("python"):
+            result_text = result_text[len("python"):].strip()
+
     return eval(result_text)
 
 if __name__ == "__main__":
