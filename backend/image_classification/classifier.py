@@ -1,12 +1,12 @@
 import openai
 import os
-from dotenv import load_dotenv
 import sys
+import json
+from dotenv import load_dotenv
 
 load_dotenv()
 
-
-def classify_image_tags(image_url: str) -> list:
+def classify_image(image_url: str) -> dict:
     client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     response = client.chat.completions.create(
@@ -15,29 +15,37 @@ def classify_image_tags(image_url: str) -> list:
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": "Classify this image into tags useful for a rental app. Output only a Python list of relevant keywords."},
+                    {
+                        "type": "text",
+                        "text": (
+                            "Classify this image into tags useful for a rental app, and also give a short natural language description of the item. "
+                            "Respond only as a JSON object with two fields: 'tags' (a list of keywords) and 'description' (a string). "
+                            "Example format: {\"tags\": [\"ski\", \"winter\"], \"description\": \"These are a pair of skis...\"}"
+                        )
+                    },
                     {"type": "image_url", "image_url": {"url": image_url}},
                 ],
             }
         ],
-        max_tokens=100
+        max_tokens=200
     )
 
     result_text = response.choices[0].message.content.strip()
 
-    # Remove code block if present
+    # Clean code block wrapper if present
     if result_text.startswith("```"):
         result_text = result_text.strip("`").strip()
-        if result_text.startswith("python"):
-            result_text = result_text[len("python"):].strip()
+        if result_text.startswith("json"):
+            result_text = result_text[len("json"):].strip()
 
-    return eval(result_text)
+    # Parse JSON safely
+    return json.loads(result_text)
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python classify.py <image_url>")
+        print("Usage: python classifier.py <image_url>")
         sys.exit(1)
 
     image_url = sys.argv[1]
-    tags = classify_image_tags(image_url)
-    print("Tags:", tags)
+    result = classify_image(image_url)
+    print(json.dumps(result, indent=2))
