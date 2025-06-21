@@ -7,11 +7,43 @@ import { Calendar } from "../components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { ArrowLeft, MapPin, Star, Clock, User, Calendar as CalendarIcon } from 'lucide-react';
+import { set } from 'date-fns';
 
 function ListingPage() {
 const { id } = useParams();
-const [selectedDate, setSelectedDate] = useState<Date>();
+const [selectedRange, setSelectedRange] = useState<{ from: Date; to?: Date }>();
 const [listing, setListing] = useState<any | null | false>(null); // null = loading, false = not found
+const [unavailableRanges, setUnavailableRanges] = useState<{ start: string; end: string }[]>([]);
+
+const handleRangeSelect = (range: { from: Date; to?: Date } | undefined) => {
+  if (!range?.from || !range?.to) {
+    setSelectedRange(range);
+    return;
+  }
+
+  const day = new Date(range.from);
+  const end = new Date(range.to);
+  let conflict = false;
+
+  while (day <= end) {
+    for (const unavailable of unavailableRanges) {
+      const unStart = new Date(unavailable.start);
+      const unEnd = new Date(new Date(unavailable.end).setDate(new Date(unavailable.end).getDate() + 1));
+      if (day >= unStart && day < unEnd) {
+        conflict = true;
+        break;
+      }
+    }
+    if (conflict) break;
+    day.setDate(day.getDate() + 1);
+  }
+
+  if (!conflict) {
+    setSelectedRange(range);
+  } else {
+    alert("That range includes unavailable dates. Please choose a different range.");
+  }
+};
 
 useEffect(() => {
   fetch('http://127.0.0.1:8000/listings/' + id)
@@ -42,13 +74,16 @@ useEffect(() => {
         },
         availability: item.availability,
       };
+      console.log(item.unavailable_dates);
       setListing(transformed);
+      setUnavailableRanges(item.unavailable_dates || []);
     })
     .catch(err => {
       console.error('Error fetching listing:', err);
       setListing(false); // explicitly mark as "not found"
     });
 }, [id]);
+
 
   
 if (listing === null) {
@@ -200,44 +235,73 @@ if (listing === false) {
                 {/* Calendar */}
                 <div>
                   <h3 className="font-semibold mb-3">Select available dates</h3>
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={setSelectedDate}
+                    <Calendar
+                    mode="range"
+                    selected={selectedRange}
+                    onSelect={handleRangeSelect}
+                    numberOfMonths={2}
+                    showOutsideDays={false}
                     disabled={(date) => {
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      return date < today || !isDateAvailable(date);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        if (date < today) return true;
+                        for (const range of unavailableRanges) {
+                        const start = new Date(range.start);
+                        const end = new Date(new Date(range.end).setDate(new Date(range.end).getDate() + 1));
+                        if (date >= start && date <= end) return true;
+                        }
+                        return false;
                     }}
-                    className="rounded-md border p-3"
                     modifiers={{
-                      available: availableDates,
+                        future: (date) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        return date >= today;
+                        },
+                        past: (date) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        return date < today;
+                        },
+                        unavailable: (date) => {
+                        for (const range of unavailableRanges) {
+                            const start = new Date(range.start);
+                            const end = new Date(new Date(range.end).setDate(new Date(range.end).getDate() + 1));
+                            if (date >= start && date <= end) return true;
+                        }
+                        return false;
+                        },
                     }}
-                    modifiersStyles={{
-                      available: {
-                        backgroundColor: '#dcfce7',
-                        color: '#166534'
-                      }
+                    modifiersClassNames={{
+                        range_start: "bg-blue-600 text-white",
+                        range_end: "bg-blue-600 text-white",
+                        range_middle: "bg-blue-200 text-blue-900",
+                        unavailable: "bg-gray-100 text-gray-400 line-through",
+                        selected: "bg-blue-500 text-white",
                     }}
-                  />
-                  <p className="text-sm text-gray-600 mt-2">
-                    Green dates are available for rental
-                  </p>
+                    />
                 </div>
 
-                {selectedDate && (
-                  <div className="p-4 bg-blue-50 rounded-lg">
+                {selectedRange?.from && (
+                <div className="p-4 bg-blue-50 rounded-lg">
                     <p className="text-sm text-blue-800">
-                      Selected: {selectedDate.toLocaleDateString()}
+                    Selected:{' '}
+                    {selectedRange.to
+                        ? `${selectedRange.from.toLocaleDateString()} to ${selectedRange.to.toLocaleDateString()}`
+                        : selectedRange.from.toLocaleDateString()}
                     </p>
-                  </div>
+                </div>
                 )}
 
                 <Button 
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                  disabled={!selectedDate}
+                className="w-full bg-blue-600 hover:bg-blue-700"
+                disabled={!selectedRange?.from}
                 >
-                  {selectedDate ? 'Reserve Now' : 'Select a date to reserve'}
+                {selectedRange?.from
+                    ? selectedRange.to
+                    ? 'Reserve Now'
+                    : 'Select an end date to reserve'
+                    : 'Select a date range to reserve'}
                 </Button>
 
                 <div className="text-center text-sm text-gray-600">

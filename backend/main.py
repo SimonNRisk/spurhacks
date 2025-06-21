@@ -96,8 +96,17 @@ def get_listing_by_id(listing_id: int):
             availability = (end + timedelta(days=1)).strftime('%B %d')
             break
     user = supabase.table("users").select("*").eq("id", listing["user"]).execute().data[0]
-    print(user["fname"] + " " + user["lname"])
-    print(user)
+    requests = (
+        supabase.table("requests")
+        .select("*")
+        .eq("approve", 1)
+        .eq("item", listing_id)
+        .execute()
+        .data
+    )
+    unavailable_dates = []
+    for request in requests:
+        unavailable_dates.append({ "start": request["start_date"], "end": request["end_date"] })
     return {
         "id": listing["id"],
         "title": listing["title"],
@@ -109,7 +118,8 @@ def get_listing_by_id(listing_id: int):
         "availability": availability,
         "user": user["fname"] + " " + user["lname"],
         "rating": listing.get("rating", 0),
-        "num_reviews": listing.get("num_reviews", 0)
+        "num_reviews": listing.get("num_reviews", 0),
+        "unavailable_dates": unavailable_dates
     }
 
 @app.get("/users")
