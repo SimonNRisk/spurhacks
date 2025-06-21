@@ -7,16 +7,16 @@ import Header from './Header';
 const mockProfileData = {
   userId: 1,
   name: 'Jane Doe',
-  avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face',
-  stats: {
-    listedItems: 12,
-    upcomingRentals: 3,
-    pastRentals: 24,
-    earnings: 2847.50,
-    spending: 892.25,
-    rating: 4.8,
-    totalViews: 1247
-  },
+//   avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face',
+//   stats: {
+//     listedItems: 12,
+//     upcomingRentals: 3,
+//     pastRentals: 24,
+//     earnings: 2847.50,
+//     spending: 892.25,
+//     rating: 4.8,
+//     totalViews: 1247
+//   },
   upcomingRentals: [
     { id: 1, item: 'Professional Camera Kit', renter: 'Mike Johnson', date: '2025-06-25', duration: '3 days', price: 180, status: 'confirmed' },
     { id: 2, item: 'Camping Tent Set', renter: 'Sarah Wilson', date: '2025-06-28', duration: '1 week', price: 95, status: 'pending' },
@@ -114,19 +114,19 @@ const RentalCard = ({ rental, type = 'upcoming' }) => {
             <h4 className="font-semibold text-gray-800 text-sm">{rental.item}</h4>
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
               type === 'upcoming' 
-                ? rental.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                ? rental.status === 'Confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                 : 'bg-blue-100 text-blue-800'
             }`}>
-              {type === 'upcoming' ? rental.status : `${rental.rating}★`}
+              {rental.status}
             </span>
           </div>
           <div className="space-y-2 text-sm text-gray-600">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              <span>{rental.date} • {rental.duration}</span>
+              <span>{rental.start_date} to {rental.end_date}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="font-medium">{type === 'upcoming' ? rental.renter : rental.owner}</span>
+              <span className="font-medium">{rental.renter}</span>
               <span className="font-bold text-green-600">${rental.price}</span>
             </div>
           </div>
@@ -153,7 +153,7 @@ const ItemCard = ({ item }) => {
               <p className="text-xs text-gray-500">{item.category}</p>
             </div>
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-              item.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+              item.status === 'Confirmed' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
             }`}>
               {item.status}
             </span>
@@ -188,7 +188,7 @@ const PendingRequestCard = ({ request }) => {
           <div className="flex-1">
             <h4 className="font-semibold text-gray-800 text-md">{request.title}</h4>
             <p className="text-xs text-gray-600">Requested by <strong>{request.user}</strong></p>
-            <p className="text-xs text-gray-600">{request.startDate} - {request.endDate}</p>
+            <p className="text-xs text-gray-600">{request.start_date} to {request.end_date}</p>
             <p className="mt-2 text-sm text-gray-700 italic">"{request.message}"</p>
           </div>
           <div className="flex flex-col space-y-2">
@@ -210,8 +210,8 @@ const YourRequestCard = ({ request }) => {
           <img src={request.image} alt={request.title} className="w-16 h-16 rounded-md object-cover" />
           <div className="flex-1">
             <h4 className="font-semibold text-gray-800 text-md">{request.title}</h4>
-            <p className="text-xs text-gray-600">Requested by <strong>{request.user}</strong></p>
-            <p className="text-xs text-gray-600">{request.startDate} - {request.endDate}</p>
+            {/* <p className="text-xs text-gray-600">Requested by <strong>{request.user}</strong></p> */}
+            <p className="text-xs text-gray-600">{request.start_date} to {request.end_date}</p>
             <p className="mt-2 text-sm text-gray-700 italic">"{request.message}"</p>
           </div>
           <div className="flex flex-col space-y-2">
@@ -227,17 +227,64 @@ const YourRequestCard = ({ request }) => {
 const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState('upcoming');
   const [isLoaded, setIsLoaded] = useState(false);
+  const [profile, setProfile] = useState(null);
 
-  const { name, avatar, stats, upcomingRentals, pastRentals, listedItems, pendingRequests } = mockProfileData;
+  useEffect(() => {
+    fetch('http://127.0.0.1:8000/profile/')
+      .then(res => {
+        if (!res.ok) throw new Error('Not found');
+        return res.json();
+      })
+      .then(data => {
+        const transformed = {
+          name: data.name,
+          upcomingRentals: data.upcoming_rentals || [],
+          pastRentals: data.past_rentals || [],
+          listedItems: data.listed_items || [],
+          pendingRequests: data.pending_requests || [],
+          yourRequests: data.your_requests || [],
+        };
+        console.log('Fetched profile:', transformed);
+        setProfile(transformed);
+      })
+      .catch(err => {
+        console.error('Error fetching profile:', err);
+      });
+  }, []);
 
   useEffect(() => {
     setIsLoaded(true);
   }, []);
 
+  if (!profile) return <div className="h-full bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <Header />
+              <div className="flex items-center justify-center p-4 h-full">
+            <div className="flex flex-col items-center space-y-6">
+              {/* Enhanced spinning loader */}
+              <div className="relative">
+                {/* Outer ring */}
+                <div className="w-16 h-16 border-4 border-blue-200 rounded-full animate-pulse"></div>
+                
+                {/* Spinning ring */}
+                <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-blue-600 border-r-blue-500 rounded-full animate-spin"></div>
+              </div>
+
+              {/* Text with animated dots */}
+              <div className="text-center space-y-2">
+                <p className="text-xl font-medium text-slate-700">
+                  Loading...
+                </p>
+              </div>
+            </div>
+    </div>
+    </div>;
+
+  const { name, upcomingRentals, pastRentals, listedItems, pendingRequests, yourRequests } = profile;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <Header />
-      <div className={`bg-white shadow-sm`}>
+      <div className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center gap-4">
             <div className="relative">
@@ -255,17 +302,6 @@ const ProfilePage = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Stats Grid
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-6 mb-8">
-          <StatCard title="Listed Items" value={stats.listedItems} icon={Package} color="#8B5CF6" delay={100} />
-          <StatCard title="Upcoming Rentals" value={stats.upcomingRentals} icon={Clock} color="#F59E0B" delay={200} />
-          <StatCard title="Past Rentals" value={stats.pastRentals} icon={CheckCircle} color="#10B981" delay={300} />
-          <StatCard title="Total Earned" value={stats.earnings} icon={TrendingUp} color="#059669" delay={400} prefix="$" />
-          <StatCard title="Total Spent" value={stats.spending} icon={DollarSign} color="#DC2626" delay={500} prefix="$" />
-          <StatCard title={<>Rating <br /> <br /></>} value={stats.rating} icon={Star} color="#F59E0B" delay={600} suffix="★" />
-          <StatCard title="Profile Views" value={stats.totalViews} icon={Eye} color="#6366F1" delay={700} />
-        </div> */}
-
         {/* Pending Requests Section */}
         <div className={`w-full mb-8 transition-all duration-1000 transform ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
           <Card>
@@ -273,7 +309,7 @@ const ProfilePage = () => {
               <h2 className="text-xl font-bold text-gray-800 mb-4">Pending Requests</h2>
               {pendingRequests.length > 0 ? (
                 <div className="flex flex-col gap-4 max-h-[270px] overflow-y-auto">
-                  {pendingRequests.map((req, idx) => (
+                  {pendingRequests.map((req) => (
                     <PendingRequestCard key={req.id} request={req} />
                   ))}
                 </div>
@@ -284,14 +320,14 @@ const ProfilePage = () => {
           </Card>
         </div>
 
-        {/* users requests */}
-                <div className={`w-full mb-8 transition-all duration-1000 transform ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
+        {/* User's Requests Section */}
+        <div className={`w-full mb-8 transition-all duration-1000 transform ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
           <Card>
             <CardContent className="p-6">
               <h2 className="text-xl font-bold text-gray-800 mb-4">Your Requests</h2>
-              {pendingRequests.length > 0 ? (
+              {yourRequests.length > 0 ? (
                 <div className="flex flex-col gap-4 max-h-[270px] overflow-y-auto">
-                  {pendingRequests.map((req, idx) => (
+                  {yourRequests.map((req) => (
                     <YourRequestCard key={req.id} request={req} />
                   ))}
                 </div>
@@ -301,6 +337,8 @@ const ProfilePage = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Rentals and Listings Sections */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Rentals Section */}
           <div className={`transition-all duration-1000 transform ${isLoaded ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'}`}>
@@ -311,40 +349,31 @@ const ProfilePage = () => {
                   <div className="flex bg-gray-100 rounded-lg p-1">
                     <button
                       onClick={() => setActiveTab('upcoming')}
-                      className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                        activeTab === 'upcoming' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600'
-                      }`}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${activeTab === 'upcoming' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600'}`}
                     >
                       Upcoming ({upcomingRentals.length})
                     </button>
                     <button
                       onClick={() => setActiveTab('past')}
-                      className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                        activeTab === 'past' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600'
-                      }`}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${activeTab === 'past' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600'}`}
                     >
                       Past ({pastRentals.length})
                     </button>
                   </div>
                 </div>
-                
                 <div className="space-y-4 max-h-96 overflow-y-auto">
                   {activeTab === 'upcoming' ? (
                     upcomingRentals.length > 0 ? (
-                      upcomingRentals.map((rental, index) => (
-                        <div key={rental.id} className={`transition-all duration-500 transform ${isLoaded ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0'}`} style={{transitionDelay: `${index * 100}ms`}}>
-                          <RentalCard rental={rental} type="upcoming" />
-                        </div>
+                      upcomingRentals.map((rental) => (
+                        <RentalCard key={rental.id} rental={rental} type="upcoming" />
                       ))
                     ) : (
                       <p className="text-gray-500 text-center py-8">No upcoming rentals</p>
                     )
                   ) : (
                     pastRentals.length > 0 ? (
-                      pastRentals.map((rental, index) => (
-                        <div key={rental.id} className={`transition-all duration-500 transform ${isLoaded ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0'}`} style={{transitionDelay: `${index * 100}ms`}}>
-                          <RentalCard rental={rental} type="past" />
-                        </div>
+                      pastRentals.map((rental) => (
+                        <RentalCard key={rental.id} rental={rental} type="past" />
                       ))
                     ) : (
                       <p className="text-gray-500 text-center py-8">No past rentals</p>
@@ -365,13 +394,10 @@ const ProfilePage = () => {
                     {listedItems.filter(item => item.status === 'active').length} Active
                   </span>
                 </div>
-                
                 <div className="space-y-4 max-h-96 overflow-y-auto">
                   {listedItems.length > 0 ? (
-                    listedItems.map((item, index) => (
-                      <div key={item.id} className={`transition-all duration-500 transform ${isLoaded ? 'translate-x-0 opacity-100' : '-translate-x-8 opacity-0'}`} style={{transitionDelay: `${index * 100}ms`}}>
-                        <ItemCard item={item} />
-                      </div>
+                    listedItems.map((item) => (
+                      <ItemCard key={item.id} item={item} />
                     ))
                   ) : (
                     <p className="text-gray-500 text-center py-8">No items listed</p>

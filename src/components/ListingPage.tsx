@@ -223,9 +223,9 @@ if (listing === false) {
           </div>
 
           {/* Right Column - Booking & Calendar */}
-          <div className="space-y-6">
+          <div className="space-y-6 h-[642px]">
             {/* Price & Booking */}
-            <Card className="sticky top-6">
+            <Card className="sticky top-6 h-[642px]">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <CalendarIcon className="h-6 w-6" />
