@@ -15,13 +15,17 @@ def classify_search_prompt(prompt: str) -> dict:
             {
                 "role": "user",
                 "content": (
-                    f"I am building a rental app. Given this user message: \"{prompt}\", extract relevant tags that describe what the user might be looking for. "
-                    "Output your answer as a JSON object with the following format: "
-                    "{\"tags\": [\"tag1\", \"tag2\", ...], \"summary\": \"Short natural language summary of what this user wants.\"}"
+                    f"I'm building a rental app. Given this user message: \"{prompt}\", extract relevant information about what the user might be looking for. "
+                    "Respond ONLY as a JSON object with exactly three fields:\n"
+                    "1. \"tags\": an array of keywords that describe what they might need\n"
+                    "2. \"description\": a short natural language summary of their intent\n"
+                    "3. \"location\": a rough location if mentioned (e.g., 'Canada', 'Barrie', 'Toronto'); otherwise return 'unknown'\n\n"
+                    "Example output:\n"
+                    "{\"tags\": [\"ski\", \"winter gear\"], \"description\": \"User is preparing for a winter trip.\", \"location\": \"up north\"}"
                 )
             }
         ],
-        max_tokens=150
+        max_tokens=200
     )
 
     result_text = response.choices[0].message.content.strip()
