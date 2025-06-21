@@ -4,18 +4,19 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, MapPin, X } from 'lucide-react';
 
-interface HeroSectionProps {
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-}
-
 interface SearchTag {
   text: string;
   id: string;
 }
 
-const HeroSection = ({ searchQuery, setSearchQuery }: HeroSectionProps) => {
-  const [tags, setTags] = useState<SearchTag[]>([]);
+interface HeroSectionProps {
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  selectedTags: SearchTag[];
+  setSelectedTags: (tags: SearchTag[]) => void;
+}
+
+const HeroSection = ({ searchQuery, setSearchQuery, selectedTags, setSelectedTags }: HeroSectionProps) => {
   const [location, setLocation] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -44,7 +45,7 @@ const HeroSection = ({ searchQuery, setSearchQuery }: HeroSectionProps) => {
         id: `${tag}-${Date.now()}-${index}`,
       }));
       
-      setTags(newTags);
+      setSelectedTags(newTags);
       
       // Update location if provided
       if (data.location && data.location !== 'unknown') {
@@ -63,7 +64,7 @@ const HeroSection = ({ searchQuery, setSearchQuery }: HeroSectionProps) => {
   };
 
   const removeTag = (tagId: string) => {
-    setTags(tags.filter(tag => tag.id !== tagId));
+    setSelectedTags(selectedTags.filter(tag => tag.id !== tagId));
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -117,9 +118,9 @@ const HeroSection = ({ searchQuery, setSearchQuery }: HeroSectionProps) => {
             </div>
             
             {/* Tags Display */}
-            {tags.length > 0 && (
+            {selectedTags.length > 0 && (
               <div className="flex flex-wrap gap-2 p-2 bg-gray-50 rounded-lg">
-                {tags.map((tag) => (
+                {selectedTags.map((tag) => (
                   <Badge
                     key={tag.id}
                     variant="secondary"
