@@ -13,9 +13,10 @@ interface ListingsGridProps {
   selectedCategory: string;
   selectedLocation: string;
   selectedTags: SearchTag[];
+  refreshTrigger?: number;
 }
 
-const ListingsGrid = ({ searchQuery, selectedCategory, selectedLocation, selectedTags }: ListingsGridProps) => {
+const ListingsGrid = ({ searchQuery, selectedCategory, selectedLocation, selectedTags, refreshTrigger }: ListingsGridProps) => {
   const [allListings, setAllListings] = useState([]);
 
   useEffect(() => {
@@ -48,7 +49,7 @@ const ListingsGrid = ({ searchQuery, selectedCategory, selectedLocation, selecte
         setAllListings(transformed);
       })
       .catch(err => console.error('Error fetching listings:', err));
-  }, []);
+  }, [refreshTrigger]);
 
   // Filter listings based on selected tags
   const filteredListings = useMemo(() => {

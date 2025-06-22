@@ -229,6 +229,7 @@ async def generate_details_from_upload(file: UploadFile = File(...)):
         
         # 1. Generate description and tags from image
         details = generate_details_from_image_bytes(image_bytes)
+        title = details.get("title", "Generated Item")
         description = details.get("description", "No description generated.")
         initial_tags = details.get("tags", [])
 
@@ -255,6 +256,7 @@ async def generate_details_from_upload(file: UploadFile = File(...)):
         image_url = supabase.storage.from_(bucket_name).get_public_url(image_path)
         
         return {
+            "title": title,
             "description": description,
             "tags": verified_tags,
             "photo_url": image_url, # For frontend display

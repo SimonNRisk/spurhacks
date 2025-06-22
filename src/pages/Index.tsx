@@ -13,10 +13,16 @@ const Index = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [selectedTags, setSelectedTags] = useState<SearchTag[]>([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const handleListingCreated = () => {
+    // Trigger a refresh of the listings grid
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header onListingCreated={handleListingCreated} />
       <HeroSection 
         searchQuery={searchQuery} 
         setSearchQuery={setSearchQuery}
@@ -34,6 +40,7 @@ const Index = () => {
         selectedCategory={selectedCategory}
         selectedLocation={selectedLocation}
         selectedTags={selectedTags}
+        refreshTrigger={refreshTrigger}
       />
     </div>
   );

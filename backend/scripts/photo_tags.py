@@ -22,9 +22,11 @@ def generate_details_from_image_bytes(image_bytes: bytes) -> dict:
                     {
                         "type": "text",
                         "text": (
-                            "Analyze this image of an item to be rented out. Provide a concise, appealing one-sentence description. "
-                            "Also, provide up to 5 relevant one or two-word tags for categorization. "
-                            "Respond ONLY as a JSON object with two keys: 'description' (a string) and 'tags' (a list of lowercase strings)."
+                            "Analyze this image of an item to be rented out. Provide:\n"
+                            "1. A literal 4-word description of what you see (like 'Red Mountain Bike Frame' or 'Black Power Drill Tool')\n"
+                            "2. A concise, appealing one-sentence description for details\n"
+                            "3. Up to 5 relevant one or two-word tags for categorization\n\n"
+                            "Respond ONLY as a JSON object with three keys: 'title' (a string), 'description' (a string), and 'tags' (a list of lowercase strings)."
                         )
                     },
                     {
