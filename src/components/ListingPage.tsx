@@ -160,7 +160,7 @@ if (listing === false) {
         {/* Back Link */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Link to="/" className="inline-flex items-center text-blue-600 hover:text-blue-700">
+          <Link to="/" className="inline-flex items-center text-primary hover:text-blue-700">
             <ArrowLeft className="h-5 w-5 mr-2" />
             Back to listings
           </Link>
@@ -210,11 +210,11 @@ if (listing === false) {
                 <CardContent className="p-4">
                   <div className="flex items-center space-x-3">
                     <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                      <User className="h-6 w-6 text-blue-600" />
+                      <User className="h-6 w-6 text-primary" />
                     </div>
                     <div>
                       <h3 className="font-semibold text-gray-900">{listing.owner.name}</h3>
-                      <p className="text-gray-600">Item owner</p>
+                      <p className="text-light">Item owner</p>
                     </div>
                   </div>
                 </CardContent>
@@ -283,14 +283,14 @@ if (listing === false) {
                         range_end: "bg-blue-600 text-white",
                         range_middle: "bg-blue-200 text-blue-900",
                         unavailable: "bg-gray-100 text-gray-400 line-through",
-                        selected: "bg-blue-500 text-white",
+                        selected: "bg-primary text-white",
                     }}
                     />
                 </div>
 
                 {selectedRange?.from && (
-                <div className="p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-800">
+                <div className="p-4 bg-blue-100 rounded-lg">
+                    <p className="text-sm text-primary">
                     Selected:{' '}
                     {selectedRange.to
                         ? `${selectedRange.from.toLocaleDateString()} to ${selectedRange.to.toLocaleDateString()}`
@@ -300,7 +300,7 @@ if (listing === false) {
                 )}
 
                 <Button 
-                className="w-full bg-blue-600 hover:bg-blue-700"
+                className="w-full bg-primary hover:bg-blue-700"
                 disabled={!selectedRange?.from || !selectedRange?.to}
                 onClick={() => setShowModal(true)}
                 >
