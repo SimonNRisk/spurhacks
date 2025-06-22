@@ -262,11 +262,8 @@ const ProfilePage = () => {
             <div className="flex flex-col items-center space-y-6">
               {/* Enhanced spinning loader */}
               <div className="relative">
-                {/* Outer ring */}
-                <div className="w-16 h-16 border-4 border-blue-200 rounded-full animate-pulse"></div>
-                
-                {/* Spinning ring */}
-                <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-blue-600 border-r-blue-500 rounded-full animate-spin"></div>
+                <div className="w-16 h-16 border-4 border-opacity-30 rounded-full animate-pulse" style={{borderColor: '#176B82'}}></div>
+                <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full animate-spin" style={{borderTopColor: '#176B82', borderRightColor: '#2E8CA1'}}></div>
               </div>
 
               {/* Text with animated dots */}
@@ -288,7 +285,7 @@ const ProfilePage = () => {
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center gap-4">
             <div className="relative">
-              <User className="h-16 w-16 text-blue-600" />
+              <User className="h-16 w-16 text-primary" />
               <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
                 <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
               </div>
