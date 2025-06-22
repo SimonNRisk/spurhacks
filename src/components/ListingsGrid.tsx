@@ -125,13 +125,14 @@ const ListingsGrid = ({
           </h2>
 
           <div className="flex flex-col md:flex-row gap-2 text-gray-600 md:items-center">
-            <p className="whitespace-nowrap">
-              {filteredListings.length} items available
-            </p>
-            {selectedTags.length > 0 && (
-              <p className="text-sm text-blue-600 font-medium">
-                Showing results for:{" "}
+            {selectedTags.length > 0 ? (
+              <p className="whitespace-nowrap">
+                {filteredListings.length} items available for{" "}
                 {selectedTags.map((tag) => tag.text).join(", ")}
+              </p>
+            ) : (
+              <p className="whitespace-nowrap">
+                {filteredListings.length} items available
               </p>
             )}
             <button
