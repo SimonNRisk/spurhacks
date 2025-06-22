@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import { Star } from "lucide-react";
+import toast from "react-hot-toast";
 
 export type BookingRequest = {
   id: number;
@@ -17,6 +18,7 @@ type RequestModalProps = {
   request: BookingRequest | null;
   isOpen: boolean;
   onClose: () => void;
+  onAction: (id: number, action: "approved" | "rejected") => void;
 };
 
 function getDatesInRange(start: Date, end: Date): Date[] {
@@ -32,9 +34,6 @@ function getDatesInRange(start: Date, end: Date): Date[] {
 export function RequestModal({ request, isOpen, onClose }: RequestModalProps) {
   if (!isOpen || !request) return null;
 
-  const [actionTaken, setActionTaken] = useState<
-    "approved" | "rejected" | null
-  >(null);
   const [showCalendar, setShowCalendar] = useState(false);
 
   const email = useMemo(() => {
@@ -47,18 +46,19 @@ export function RequestModal({ request, isOpen, onClose }: RequestModalProps) {
   const startDate = new Date("2025-06-20");
   const endDate = new Date("2025-06-24");
 
-  // const startDate = useMemo(() => new Date(request.start_date), [request.start_date]);
-  // const endDate = useMemo(() => new Date(request.end_date), [request.end_date]);
-
   const highlightedDates = useMemo(
     () => getDatesInRange(startDate, endDate),
     [startDate, endDate]
   );
 
+  const handleAction = (action: "approved" | "rejected") => {
+    toast.success(`Request ${action}!`);
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-xl shadow-md w-[28rem] relative">
-        {/* Top-right X button */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-xl"
@@ -89,7 +89,6 @@ export function RequestModal({ request, isOpen, onClose }: RequestModalProps) {
 
         <p className="text-gray-600 italic mb-4">"{request.message}"</p>
 
-        {/* Booking Date Info */}
         <div className="mb-4">
           <label className="text-sm text-gray-500 block mb-1">
             Booking Dates
@@ -120,41 +119,31 @@ export function RequestModal({ request, isOpen, onClose }: RequestModalProps) {
               modifiers={{ booked: highlightedDates }}
               modifiersStyles={{
                 booked: {
-                  backgroundColor: "rgba(212, 242, 247, 0.6)", // Light blue with 60% opacity
+                  backgroundColor: "rgba(212, 242, 247, 0.6)",
                   color: "#176B82",
                   borderRadius: "0.375rem",
                   fontWeight: "500",
                 },
               }}
-              className="border rounded-lg p-2"
+              className="border rounded-lg p-2 mt-2"
             />
           )}
         </div>
 
-        {actionTaken ? (
-          <p
-            className={`text-center font-semibold ${
-              actionTaken === "approved" ? "text-green-600" : "text-red-500"
-            }`}
+        <div className="flex justify-end space-x-3">
+          <button
+            onClick={() => handleAction("rejected")}
+            className="px-4 py-2 text-red-600 border border-red-600 rounded hover:bg-red-50"
           >
-            You {actionTaken} this request.
-          </p>
-        ) : (
-          <div className="flex justify-end space-x-3">
-            <button
-              onClick={() => setActionTaken("rejected")}
-              className="px-4 py-2 text-red-600 border border-red-600 rounded hover:bg-red-50"
-            >
-              Reject
-            </button>
-            <button
-              onClick={() => setActionTaken("approved")}
-              className="px-4 py-2 bg-[#176B82] text-white rounded hover:bg-[#14586A]"
-            >
-              Approve
-            </button>
-          </div>
-        )}
+            Reject
+          </button>
+          <button
+            onClick={() => handleAction("approved")}
+            className="px-4 py-2 bg-white text-primary border-2 border-primary rounded hover:bg-primary-light"
+          >
+            Approve
+          </button>
+        </div>
       </div>
     </div>
   );
