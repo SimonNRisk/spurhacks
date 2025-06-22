@@ -54,3 +54,12 @@ class Listing(ListingBase):
 
     class Config:
         orm_mode = True
+
+# Schema for search functionality
+class SearchPrompt(BaseModel):
+    prompt: str
+
+class SearchResult(BaseModel):
+    tags: List[str]
+    description: str
+    location: str
