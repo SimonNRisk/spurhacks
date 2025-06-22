@@ -35,9 +35,22 @@ const ListingCard = ({ listing }: ListingCardProps) => {
     return location.split(",")[0].trim();
   };
   const now = new Date();
-
   const parsedDate = new Date(`${listing.availability}, 2025`);
-  const isAvailable = parsedDate > now;
+
+  // Normalize both dates to midnight for clean date-only comparison
+  const nowMidnight = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  );
+  const parsedMidnight = new Date(
+    parsedDate.getFullYear(),
+    parsedDate.getMonth(),
+    parsedDate.getDate()
+  );
+
+  // Check if parsed date is today or in the future
+  const isAvailable = parsedMidnight >= nowMidnight;
   return (
     <Card
       className="group transition-all duration-300 overflow-hidden border border-gray-200 rounded-2xl shadow-sm hover:shadow-md hover:scale-[1.015] flex flex-col h-[360px] bg-white"
