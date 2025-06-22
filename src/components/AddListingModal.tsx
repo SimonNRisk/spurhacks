@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Camera, Upload, Package, DollarSign, Loader2, X } from 'lucide-react';
+import { Camera, Upload, Package, DollarSign, Loader2, X, MapPin, Sparkles } from 'lucide-react';
 
 interface AddListingModalProps {
   isOpen: boolean;
@@ -49,13 +49,12 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
   const handleFileUpload = async (file: File) => {
     if (!file) return;
 
-    // Validate file type and size
     if (!file.type.startsWith('image/')) {
       alert('Please upload an image file');
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) { // 10MB
+    if (file.size > 10 * 1024 * 1024) {
       alert('File size must be less than 10MB');
       return;
     }
@@ -64,11 +63,9 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
     setIsGenerating(true);
 
     try {
-      // Create FormData for file upload
       const formData = new FormData();
       formData.append('file', file);
 
-      // Call the generate-details endpoint
       const response = await fetch('http://localhost:8000/listings/generate-details', {
         method: 'POST',
         body: formData,
@@ -80,8 +77,7 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
 
       const result = await response.json();
 
-      // Auto-fill form fields with AI-generated content
-      setTitle(result.title || result.description?.split('.')[0] || ''); // Use AI title, fallback to first sentence
+      setTitle(result.title || result.description?.split('.')[0] || '');
       setDescription(result.description || '');
       setTags(result.tags || []);
       setUploadedImage(result.photo_url);
@@ -151,7 +147,7 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
         quantity,
         location,
         picture: photoPath,
-        user: 1 // TODO: Get actual user ID from auth context
+        user: 1
       };
       
       const response = await fetch('http://localhost:8000/listings', {
@@ -170,12 +166,10 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
       const createdListing = await response.json();
       console.log('Listing created successfully:', createdListing);
       
-      // Trigger refresh of listings grid if callback provided
       if (onListingCreated) {
         onListingCreated();
       }
       
-      // Reset form and close modal
       resetForm();
       onClose();
       
@@ -194,125 +188,157 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white">
-        {/* Header with blue background */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 -m-6 mb-6 rounded-t-lg">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white border-0 shadow-2xl rounded-2xl">
+        {/* Header */}
+        <div className="text-center py-6 border-b border-gray-100">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-white flex items-center gap-2">
-              Add New Listing
+            <DialogTitle className="text-3xl font-bold text-gray-900 mb-2">
+              List Your Item
             </DialogTitle>
+            <p className="text-gray-600 text-lg">
+              Share what you own, earn from what you don't use
+            </p>
           </DialogHeader>
         </div>
 
-        <div className="space-y-6 px-2">
+        <div className="space-y-8 p-6">
           {/* Photo Upload Section */}
-          <div 
-            className={`text-center border-2 border-dashed rounded-lg transition-colors cursor-pointer relative ${
-              uploadedImage 
-                ? 'border-blue-300 bg-blue-50' 
-                : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
-            } ${isUploading ? 'pointer-events-none' : ''}`}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onClick={() => !isUploading && fileInputRef.current?.click()}
-          >
-            {uploadedImage ? (
-              <div className="relative">
-                <img 
-                  src={uploadedImage} 
-                  alt="Uploaded item" 
-                  className="w-full h-48 object-cover rounded-lg"
-                />
-                <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
-                  <div className="text-white text-center">
-                    <Camera className="h-8 w-8 mx-auto mb-2" />
-                    <p>Click to change photo</p>
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                <Camera className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Add Photos</h3>
+                <p className="text-sm text-gray-500">Upload clear photos of your item</p>
+              </div>
+              {isGenerating && (
+                <Badge className="bg-primary/10 text-primary border-primary/20 ml-auto">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  AI Processing
+                </Badge>
+              )}
+            </div>
+
+            <div 
+              className={`relative border-2 border-dashed rounded-xl transition-all cursor-pointer group ${
+                uploadedImage 
+                  ? 'border-primary/30 bg-primary/5' 
+                  : 'border-gray-300 bg-gray-50 hover:bg-gray-100 hover:border-primary/50'
+              } ${isUploading ? 'pointer-events-none' : ''}`}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onClick={() => !isUploading && fileInputRef.current?.click()}
+            >
+              {uploadedImage ? (
+                <div className="relative overflow-hidden rounded-lg">
+                  <img 
+                    src={uploadedImage} 
+                    alt="Uploaded item" 
+                    className="w-full h-64 object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div className="text-white text-center">
+                      <Camera className="h-8 w-8 mx-auto mb-2" />
+                      <p className="font-medium">Change Photo</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div className="py-12">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
-                    {isUploading ? (
-                      <Loader2 className="h-8 w-8 text-white animate-spin" />
-                    ) : (
-                      <Camera className="h-8 w-8 text-white" />
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      {isUploading ? 'Processing Image...' : 'Upload Item Photo'}
-                    </h3>
-                    <p className="text-gray-600">
-                      {isUploading 
-                        ? 'AI is analyzing your image and generating details...'
-                        : 'Drag & drop or click to browse (JPG, PNG up to 10MB)'
-                      }
-                    </p>
+              ) : (
+                <div className="py-16 text-center">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center shadow-lg">
+                      {isUploading ? (
+                        <Loader2 className="h-8 w-8 text-white animate-spin" />
+                      ) : (
+                        <Camera className="h-8 w-8 text-white" />
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-semibold text-gray-900 mb-2">
+                        {isUploading ? 'Processing Your Photo...' : 'Upload Item Photo'}
+                      </h4>
+                      <p className="text-gray-600 max-w-sm mx-auto">
+                        {isUploading 
+                          ? 'AI is analyzing your image and generating details automatically'
+                          : 'Drag & drop your photo here, or click to browse'
+                        }
+                      </p>
+                      <p className="text-sm text-gray-400 mt-2">
+                        JPG, PNG up to 10MB
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-            
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileSelect}
-              className="hidden"
-              aria-label="Upload image file"
-            />
+              )}
+              
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+                aria-label="Upload image file"
+              />
+            </div>
           </div>
 
           {/* Item Details Section */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Package className="h-5 w-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Item Details</h3>
-              <Badge className="bg-blue-100 text-blue-800 text-xs">AI ENHANCED</Badge>
-              {isGenerating && <Loader2 className="h-4 w-4 animate-spin text-blue-600" />}
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                <Package className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Item Details</h3>
+                <p className="text-sm text-gray-500">Tell us about your item</p>
+              </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  What are you listing? *
+                </label>
                 <Input
                   type="text"
-                  placeholder="AI will suggest a title based on your image"
+                  placeholder="e.g., Canon DSLR Camera, Camping Tent, Ski Equipment"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full"
+                  className="w-full h-12 text-base border-gray-300 focus:border-primary focus:ring-primary"
                   disabled={isGenerating}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Description *
+                </label>
                 <Textarea
-                  placeholder="AI will generate a detailed description"
+                  placeholder="Describe your item's condition, brand, size, and any special features..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full min-h-[100px] resize-none"
+                  className="w-full min-h-[120px] text-base border-gray-300 focus:border-primary focus:ring-primary resize-none"
                   disabled={isGenerating}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
-                <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Categories & Tags *
+                </label>
+                <div className="space-y-3">
                   {tags.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {tags.map((tag, index) => (
                         <Badge 
                           key={index} 
-                          variant="secondary" 
-                          className="bg-blue-100 text-blue-800 flex items-center gap-1"
+                          className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-colors px-3 py-1 text-sm flex items-center gap-2"
                         >
                           {tag}
                           <button
                             onClick={() => removeTag(index)}
-                            className="ml-1 hover:bg-blue-200 rounded-full p-0.5"
+                            className="hover:bg-primary/30 rounded-full p-0.5 transition-colors"
                             aria-label={`Remove tag ${tag}`}
                           >
                             <X className="h-3 w-3" />
@@ -323,9 +349,9 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
                   )}
                   <Input
                     type="text"
-                    placeholder="AI will suggest relevant tags, or add your own (press Enter)"
+                    placeholder="Add tags like 'outdoor', 'electronics', 'winter gear' (press Enter)"
                     onKeyPress={handleTagKeyPress}
-                    className="w-full"
+                    className="w-full h-12 text-base border-gray-300 focus:border-primary focus:ring-primary"
                     disabled={isGenerating}
                   />
                 </div>
@@ -334,79 +360,104 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
           </div>
 
           {/* Rental Details Section */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <DollarSign className="h-5 w-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Rental Details</h3>
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                <DollarSign className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Rental Details</h3>
+                <p className="text-sm text-gray-500">Set your pricing and availability</p>
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Price per Day ($)</label>
-                <Input
-                  type="number"
-                  placeholder="25.00"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  className="w-full"
-                />
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Daily Rate ($) *
+                </label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Input
+                    type="number"
+                    placeholder="25.00"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    className="w-full h-12 pl-10 text-base border-gray-300 focus:border-primary focus:ring-primary"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Available Quantity</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Quantity Available
+                </label>
                 <Input
                   type="number"
                   placeholder="1"
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
-                  className="w-full"
+                  className="w-full h-12 text-base border-gray-300 focus:border-primary focus:ring-primary"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-              <Input
-                type="text"
-                placeholder="Waterloo, Ontario"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="w-full"
-              />
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Pickup Location *
+              </label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Waterloo, Ontario"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="w-full h-12 pl-10 text-base border-gray-300 focus:border-primary focus:ring-primary"
+                />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Footer Buttons */}
-        <div className="flex justify-end gap-3 pt-6 border-t">
-          <Button
-            variant="outline"
-            onClick={handleClose}
-            className="px-8"
-            disabled={isGenerating || isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8"
-            disabled={isGenerating || isSubmitting || !title || !description || !location || !price || tags.length === 0}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : isGenerating ? (
-              'Generating...'
-            ) : (
-              'List Item'
-            )}
-          </Button>
+        {/* Footer */}
+        <div className="flex justify-between items-center p-6 border-t border-gray-100 bg-gray-50/50">
+          <p className="text-sm text-gray-500">
+            * Required fields
+          </p>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={handleClose}
+              className="px-6 h-11 border-gray-300 hover:bg-gray-50"
+              disabled={isGenerating || isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              className="bg-primary hover:bg-primary-dark text-white px-8 h-11 font-semibold shadow-lg"
+              disabled={isGenerating || isSubmitting || !title || !description || !location || !price || tags.length === 0}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating Listing...
+                </>
+              ) : isGenerating ? (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  AI Processing...
+                </>
+              ) : (
+                'List My Item'
+              )}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
   );
 };
 
-export default AddListingModal; 
+export default AddListingModal;
