@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, MapPin, X } from 'lucide-react';
+import { Search, MapPin, X } from "lucide-react";
 
 interface SearchTag {
   text: string;
@@ -16,47 +16,55 @@ interface HeroSectionProps {
   setSelectedTags: (tags: SearchTag[]) => void;
 }
 
-const HeroSection = ({ searchQuery, setSearchQuery, selectedTags, setSelectedTags }: HeroSectionProps) => {
-  const [location, setLocation] = useState('');
+const HeroSection = ({
+  searchQuery,
+  setSearchQuery,
+  selectedTags,
+  setSelectedTags,
+}: HeroSectionProps) => {
+  const [location, setLocation] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isLocationFocused, setIsLocationFocused] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const analyzeSearchPrompt = async () => {
     if (!searchQuery.trim()) return;
-    
+
     setIsAnalyzing(true);
     try {
-      const response = await fetch('http://localhost:8000/search/analyze', {
-        method: 'POST',
+      const response = await fetch("http://localhost:8000/search/analyze", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ prompt: searchQuery }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to analyze search prompt');
+        throw new Error("Failed to analyze search prompt");
       }
 
       const data = await response.json();
-      
+
       // Convert tags to SearchTag format with unique IDs
-      const newTags: SearchTag[] = data.tags.map((tag: string, index: number) => ({
-        text: tag,
-        id: `${tag}-${Date.now()}-${index}`,
-      }));
-      
+      const newTags: SearchTag[] = data.tags.map(
+        (tag: string, index: number) => ({
+          text: tag,
+          id: `${tag}-${Date.now()}-${index}`,
+        })
+      );
+
       setSelectedTags(newTags);
-      
+
       // Update location if provided
-      if (data.location && data.location !== 'unknown') {
+      if (data.location && data.location !== "unknown") {
         setLocation(data.location);
       }
-      
+
       // Clear the search query after analysis
-      setSearchQuery('');
-      
+      setSearchQuery("");
     } catch (error) {
-      console.error('Error analyzing search prompt:', error);
+      console.error("Error analyzing search prompt:", error);
       // You might want to show a toast/notification here
     } finally {
       setIsAnalyzing(false);
@@ -64,59 +72,74 @@ const HeroSection = ({ searchQuery, setSearchQuery, selectedTags, setSelectedTag
   };
 
   const removeTag = (tagId: string) => {
-    setSelectedTags(selectedTags.filter(tag => tag.id !== tagId));
+    setSelectedTags(selectedTags.filter((tag) => tag.id !== tagId));
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       analyzeSearchPrompt();
     }
   };
-
   return (
-    <section className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 text-white py-16">
+    <section className="text-black py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h1 className="text-4xl md:text-6xl font-bold mb-6">
-          Rent Anything, <span className="text-yellow-300">Anywhere</span>
+          Need It?<span className="text-primary"> Boro</span>{" "}
+          <span className="text-black">It.</span>
         </h1>
-        <p className="text-xl md:text-2xl mb-8 text-blue-100 max-w-3xl mx-auto">
-          From power tools to party supplies, discover thousands of items available for rent in your neighborhood
+        <p className="text-lg md:text-xl mb-8 text-black-thin max-w-3xl mx-auto">
+          From ski trips to weekend getaways, find and rent the gear you need -
+          right from your neighborhood.
         </p>
-        
+
         <div className="max-w-2xl mx-auto">
           <div className="bg-white rounded-lg p-2 shadow-lg">
             {/* Search Input Row */}
             <div className="flex flex-col sm:flex-row gap-4 mb-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <Search
+                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 transition-colors ${
+                    isSearchFocused ? "text-primary" : "text-gray-400"
+                  }`}
+                />
                 <Input
                   type="text"
-                  placeholder="What do you need to rent?"
+                  placeholder="Tell me what you're looking for."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={handleKeyPress}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => setIsSearchFocused(false)}
                   className="pl-10 border-0 text-gray-900 placeholder-gray-500 focus:ring-0"
                 />
               </div>
+
               <div className="flex-1 relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <MapPin
+                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 transition-colors ${
+                    isLocationFocused ? "text-primary" : "text-gray-400"
+                  }`}
+                />
                 <Input
                   type="text"
                   placeholder="Enter location"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
+                  onFocus={() => setIsLocationFocused(true)}
+                  onBlur={() => setIsLocationFocused(false)}
                   className="pl-10 border-0 text-gray-900 placeholder-gray-500 focus:ring-0"
                 />
               </div>
-              <Button 
+
+              <Button
                 onClick={analyzeSearchPrompt}
                 disabled={isAnalyzing || !searchQuery.trim()}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 disabled:opacity-50"
+                className="bg-primary hover:bg-primary-dark text-white px-8 disabled:opacity-50"
               >
-                {isAnalyzing ? 'Analyzing...' : 'Search'}
+                {isAnalyzing ? "Analyzing..." : "Search"}
               </Button>
             </div>
-            
+
             {/* Tags Display */}
             {selectedTags.length > 0 && (
               <div className="flex flex-wrap gap-2 p-2 bg-gray-50 rounded-lg">
