@@ -24,28 +24,10 @@ const Header = ({ onListingCreated }: HeaderProps) => {
 
           <nav className="hidden md:flex space-x-8">
             <a
-              href="#"
+              href="/"
               className="text-gray-700 hover:text-primary transition-colors"
             >
               Browse
-            </a>
-            <a
-              href="#"
-              className="text-gray-700 hover:text-primary transition-colors"
-            >
-              How it works
-            </a>
-            <a
-              href="#"
-              className="text-gray-700 hover:text-primary transition-colors"
-            >
-              Support
-            </a>
-            <a
-              href="#"
-              className="text-gray-700 hover:text-primary transition-colors"
-            >
-              FAQ
             </a>
           </nav>
 
