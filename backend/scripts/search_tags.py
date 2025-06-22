@@ -15,9 +15,9 @@ def classify_search_prompt(prompt: str) -> dict:
             {
                 "role": "user",
                 "content": (
-                    f"I'm building a rental app. Given this user message: \"{prompt}\", extract relevant information about what the user might be looking for. "
+                    f"I'm building a rental app. Given this user message: \"{prompt}\", extract relevant information about what the user might be looking for. The information should be specifically related to items they may need for example kayak, watersports, etc."
                     "Respond ONLY as a JSON object with exactly three fields:\n"
-                    "1. \"tags\": an array of keywords that describe what they might need\n"
+                    "1. \"tags\": an array of keywords that describe what items they might need or want. For example, if the user says they are going to the beach, the tags should be ['beach', 'canoe', 'kayak', 'water']\n"
                     "2. \"description\": a short natural language summary of their intent\n"
                     "3. \"location\": a rough location if mentioned (e.g., 'Canada', 'Barrie', 'Toronto'); otherwise return 'unknown'\n\n"
                     "Example output:\n"
