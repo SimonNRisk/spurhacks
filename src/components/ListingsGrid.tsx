@@ -51,7 +51,7 @@ const ListingsGrid = ({ searchQuery, selectedLocation }: ListingsGridProps) => {
   }, []);
 
   const filteredListings = useMemo(() => {
-    return filterListings(allListings, {
+    const filtered = filterListings(allListings, {
       maxPrice: selectedMaxPrice !== undefined ? selectedMaxPrice : undefined,
       tag:
         selectedCategory !== "all" && selectedCategory !== ""
@@ -66,7 +66,18 @@ const ListingsGrid = ({ searchQuery, selectedLocation }: ListingsGridProps) => {
           listing.description.toLowerCase().includes(searchQuery.toLowerCase())
         : true
     );
-  }, [allListings, selectedCategory, selectedMaxPrice]);
+
+    const sorted = filtered.sort((a, b) => {
+      const aNearby = a.location.toLowerCase().includes("waterloo");
+      const bNearby = b.location.toLowerCase().includes("waterloo");
+
+      if (aNearby && !bNearby) return -1;
+      if (!aNearby && bNearby) return 1;
+      return 0;
+    });
+
+    return sorted;
+  }, [allListings, selectedCategory, selectedMaxPrice, searchQuery]);
 
   return (
     <section className="py-12">

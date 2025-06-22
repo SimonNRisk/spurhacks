@@ -14,11 +14,8 @@ export interface Listing {
   image_url: string;
   rating: number;
   reviewCount: number;
-  location: {
-    name: string;
-    distance: number;
-    type: string;
-  };
+  tags: string[];
+  location: string;
   owner: {
     name: string;
     avatar: string;
@@ -31,6 +28,8 @@ interface ListingCardProps {
 }
 
 const ListingCard = ({ listing }: ListingCardProps) => {
+  const isNearby = listing.location.toLowerCase().includes("waterloo");
+  console.log(isNearby, listing.location);
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 overflow-hidden border-0 shadow-md hover:scale-105 flex flex-col h-[420px]">
       <div className="relative overflow-hidden">
@@ -44,11 +43,6 @@ const ListingCard = ({ listing }: ListingCardProps) => {
             {listing.category}
           </Badge> */}
         </div>
-        {listing.location.type === "nearby" && (
-          <div className="absolute top-3 right-3">
-            <Badge className="bg-green-500 text-white">Nearby</Badge>
-          </div>
-        )}
       </div>
 
       <CardContent className="p-4 flex flex-col flex-grow justify-between">
@@ -60,7 +54,9 @@ const ListingCard = ({ listing }: ListingCardProps) => {
             <div className="flex items-center space-x-1 text-sm text-gray-600">
               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
               <span>{listing.rating}</span>
-              <span className="text-gray-400">({listing.reviewCount})</span>
+              {listing.reviewCount > 0 && (
+                <span className="text-gray-400">({listing.reviewCount})</span>
+              )}
             </div>
           </div>
 
@@ -70,7 +66,14 @@ const ListingCard = ({ listing }: ListingCardProps) => {
 
           <div className="flex items-center space-x-1 text-sm text-gray-500">
             <MapPin className="h-4 w-4" />
-            <span>{listing.location.name}</span>
+            {isNearby ? (
+              <span>
+                {listing.location}{" "}
+                <span className="text-primary font-semibold">(Nearby)</span>
+              </span>
+            ) : (
+              <span>{listing.location}</span>
+            )}
           </div>
 
           <div className="flex items-center space-x-1 text-sm text-green-600">
@@ -84,9 +87,13 @@ const ListingCard = ({ listing }: ListingCardProps) => {
             <span className="text-2xl font-bold text-gray-900">
               ${listing.price}
             </span>
-            <span className="text-gray-500">/{listing.priceUnit}</span>
+
+            <span className="text-gray-500">/{listing.priceUnit || "day"}</span>
           </div>
-          <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+          <Button
+            size="sm"
+            className="bg-primary hover:bg-primary-dark text-white"
+          >
             Rent Now
           </Button>
         </div>
