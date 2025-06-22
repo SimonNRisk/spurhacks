@@ -253,7 +253,7 @@ def get_profile():
         curr = {
             "id": request["id"],
             "name": request["title"],
-            "category": tag_lookup[request["tags"][0]],
+            "category": tag_lookup.get(request["tags"][0], "Unknown"),
             "price": request["price"],
             "status": 'active',
             "views": random.randint(150, 300),
