@@ -19,7 +19,6 @@ interface SearchTag {
 }
 
 interface ListingsGridProps {
-  searchQuery: string;
   selectedCategory?: string;
   selectedLocation: string;
   selectedTags: SearchTag[];
@@ -27,7 +26,6 @@ interface ListingsGridProps {
 }
 
 const ListingsGrid = ({
-  searchQuery,
   selectedLocation,
   selectedTags,
   refreshTrigger,
@@ -104,16 +102,7 @@ const ListingsGrid = ({
     });
 
     // Apply search text and tag filter
-    const fullyFiltered = baseFiltered.filter(
-      (listing) =>
-        tagFilter(listing) &&
-        (searchQuery
-          ? listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            listing.description
-              .toLowerCase()
-              .includes(searchQuery.toLowerCase())
-          : true)
-    );
+    const fullyFiltered = baseFiltered.filter((listing) => tagFilter(listing));
 
     // Sort by proximity to Waterloo
     const sorted = fullyFiltered.sort((a, b) => {
@@ -123,13 +112,7 @@ const ListingsGrid = ({
     });
 
     return sorted;
-  }, [
-    allListings,
-    selectedTags,
-    selectedCategory,
-    selectedMaxPrice,
-    searchQuery,
-  ]);
+  }, [allListings, selectedTags, selectedCategory, selectedMaxPrice]);
 
   return (
     <section className="py-12">
