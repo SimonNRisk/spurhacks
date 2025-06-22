@@ -2,7 +2,7 @@
 import React, { useMemo, useEffect, useState } from "react";
 import ListingCard, { Listing } from "./ListingCard";
 import { Link } from "react-router-dom";
-import { filterListings } from "./utils/filterListings";
+import { filterListings, isRelevantMatch } from "./utils/filterListings";
 import {
   Select,
   SelectContent,
@@ -70,23 +70,11 @@ const ListingsGrid = ({
     const normalize = (str: string) =>
       str.toLowerCase().trim().replace(/\s+/g, " ");
 
-    // Tag filter (if selectedTags are provided)
+    // Tag filter (if selectedTags are provided) - now using cleaner matching
     const tagFilter = (listing: Listing) => {
       if (!selectedTags || selectedTags.length === 0) return true;
-      if (!listing.tags || listing.tags.length === 0) return false;
-
-      const normalizedSelectedTags = selectedTags.map((tag) =>
-        normalize(tag.text)
-      );
-      return listing.tags.some((listingTag) => {
-        const normalizedListingTag = normalize(listingTag);
-        return normalizedSelectedTags.some(
-          (sel) =>
-            normalizedListingTag.includes(sel) ||
-            sel.includes(normalizedListingTag) ||
-            normalizedListingTag === sel
-        );
-      });
+      const searchTagTexts = selectedTags.map(tag => tag.text);
+      return isRelevantMatch(listing.tags, searchTagTexts);
     };
 
     // Price + category filter
@@ -129,10 +117,15 @@ const ListingsGrid = ({
               {filteredListings.length} items available
             </p>
             {selectedTags.length > 0 && (
-              <p className="text-sm text-blue-600 font-medium">
-                Showing results for:{" "}
-                {selectedTags.map((tag) => tag.text).join(", ")}
-              </p>
+              <div className="text-sm space-y-1">
+                <p className="text-blue-600 font-medium">
+                  Showing results for:{" "}
+                  {selectedTags.map((tag) => tag.text).join(", ")}
+                </p>
+                <p className="text-gray-500 text-xs">
+                  Smart filtering applied - conflicting items excluded
+                </p>
+              </div>
             )}
             <button
               onClick={() => setFiltersVisible(!filtersVisible)}

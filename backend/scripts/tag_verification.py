@@ -18,7 +18,7 @@ if not supabase_url or not supabase_key:
     raise ValueError("Supabase URL or Key not found in .env file")
 supabase: Client = create_client(supabase_url, supabase_key)
 
-SIMILARITY_THRESHOLD = 0.8  # Adjust this value based on desired similarity strictness
+SIMILARITY_THRESHOLD = 0.95  # Adjust this value based on desired similarity strictness
 
 def get_embedding(text, model="text-embedding-3-small"):
     """Generates an embedding for a given text using OpenAI."""
