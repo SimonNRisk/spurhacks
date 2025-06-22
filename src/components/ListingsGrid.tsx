@@ -27,6 +27,8 @@ const ListingsGrid = ({ searchQuery, selectedLocation }: ListingsGridProps) => {
   );
   const [filtersVisible, setFiltersVisible] = useState(false);
 
+  console.log("listings", allListings);
+
   useEffect(() => {
     fetch("http://127.0.0.1:8000/")
       .then((res) => res.json())
@@ -133,7 +135,7 @@ const ListingsGrid = ({ searchQuery, selectedLocation }: ListingsGridProps) => {
               </Select>
             </div>
 
-            <div className="w-64">
+            <div className="w-64 mb-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Max Price: ${selectedMaxPrice}
               </label>

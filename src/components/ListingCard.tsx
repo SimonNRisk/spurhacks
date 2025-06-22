@@ -29,20 +29,28 @@ interface ListingCardProps {
 
 const ListingCard = ({ listing }: ListingCardProps) => {
   const isNearby = listing.location.toLowerCase().includes("waterloo");
-  console.log(isNearby, listing.location);
+  const [isHovered, setIsHovered] = React.useState(false);
+  const getCity = (location: string) => {
+    if (!location) return "Unknown";
+    return location.split(",")[0].trim();
+  };
+  const now = new Date();
+
+  const parsedDate = new Date(`${listing.availability}, 2025`);
+  const isAvailable = parsedDate > now;
   return (
-    <Card className="group hover:shadow-lg transition-all duration-300 overflow-hidden border-0 shadow-md hover:scale-105 flex flex-col h-[420px]">
+    <Card
+      className="group transition-all duration-300 overflow-hidden border border-gray-200 rounded-2xl shadow-sm hover:shadow-md hover:scale-[1.015] flex flex-col h-[360px] bg-white"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <div className="relative overflow-hidden">
         <img
           src={listing.image_url}
           alt={listing.title}
-          className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
         />
-        <div className="absolute top-3 left-3">
-          {/* <Badge variant="secondary" className="bg-white/90 text-gray-700">
-            {listing.category}
-          </Badge> */}
-        </div>
+        <div className="absolute top-3 left-3"></div>
       </div>
 
       <CardContent className="p-4 flex flex-col flex-grow justify-between">
@@ -59,30 +67,35 @@ const ListingCard = ({ listing }: ListingCardProps) => {
               )}
             </div>
           </div>
-
-          <p className="text-gray-600 text-sm line-clamp-2">
-            {listing.description}
-          </p>
-
           <div className="flex items-center space-x-1 text-sm text-gray-500">
-            <MapPin className="h-4 w-4" />
             {isNearby ? (
-              <span>
-                {listing.location}{" "}
-                <span className="text-primary font-semibold">(Nearby)</span>
-              </span>
+              <>
+                <div className="relative h-4 w-4">
+                  <span className="absolute inset-0 rounded-full bg-primary blur-[6px] opacity-30"></span>
+                  <MapPin className="relative h-4 w-4 text-primary" />
+                </div>
+                <span className="font-semibold">Waterloo</span>
+              </>
             ) : (
-              <span>{listing.location}</span>
+              <>
+                <MapPin className="h-4 w-4" />
+                <span>{getCity(listing.location)}</span>
+              </>
             )}
           </div>
-
-          <div className="flex items-center space-x-1 text-sm text-green-600">
-            <Clock className="h-4 w-4" />
-            <span>{listing.availability}</span>
-          </div>
+          {isAvailable ? (
+            <div className="flex items-center space-x-1 text-sm text-green-600">
+              <Clock className="h-4 w-4" />
+              <span>{listing.availability}</span>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-1 text-sm text-red-600">
+              <Clock className="h-4 w-4" />
+              <span>Unavailable</span>
+            </div>
+          )}
         </div>
-
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-2 flex items-center justify-between">
           <div>
             <span className="text-2xl font-bold text-gray-900">
               ${listing.price}

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, MapPin } from "lucide-react";
@@ -9,6 +9,8 @@ interface HeroSectionProps {
 }
 
 const HeroSection = ({ searchQuery, setSearchQuery }: HeroSectionProps) => {
+  const [isLocationFocused, setIsLocationFocused] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   return (
     <section className="text-black py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -24,21 +26,33 @@ const HeroSection = ({ searchQuery, setSearchQuery }: HeroSectionProps) => {
         <div className="max-w-2xl mx-auto">
           <div className="flex flex-col sm:flex-row gap-4 bg-white rounded-lg p-2 shadow-lg">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Search
+                className={`absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 ${
+                  isSearchFocused ? "text-primary" : "text-gray-400"
+                }`}
+              />
               <Input
                 type="text"
-                placeholder="What do you need to rent?"
+                placeholder="Tell me what you're looking for."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 border-0 text-gray-900 placeholder-gray-500 focus:ring-0"
+                className="pl-10 border-0 text-gray-900 placeholder-gray-500"
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setIsSearchFocused(false)}
               />
             </div>
             <div className="flex-1 relative">
-              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <MapPin
+                className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 transition-colors ${
+                  isLocationFocused ? "text-primary" : "text-gray-400"
+                }`}
+              />
               <Input
                 type="text"
                 placeholder="Enter location"
-                className="pl-10 border-0 text-gray-900 placeholder-gray-500 focus:ring-0"
+                className="pl-10 border-0 text-gray-900 placeholder-gray-500"
+                onFocus={() => setIsLocationFocused(true)}
+                onBlur={() => setIsLocationFocused(false)}
               />
             </div>
             <Button className="bg-primary hover:bg-primary-dark text-white px-8">
