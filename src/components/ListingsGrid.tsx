@@ -199,8 +199,8 @@ const ListingsGrid = ({
               {allListings.length === 0 ? (
                 <>
                   <div className="relative">
-                    <div className="w-16 h-16 border-4 border-blue-200 rounded-full animate-pulse"></div>
-                    <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-blue-600 border-r-blue-500 rounded-full animate-spin"></div>
+                  <div className="w-16 h-16 border-4 border-opacity-30 rounded-full animate-pulse" style={{borderColor: '#176B82'}}></div>
+                  <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full animate-spin" style={{borderTopColor: '#176B82', borderRightColor: '#2E8CA1'}}></div>
                   </div>
                   <div className="text-center space-y-2">
                     <p className="text-xl font-medium text-slate-700">

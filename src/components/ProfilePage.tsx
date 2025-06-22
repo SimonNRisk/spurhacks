@@ -526,7 +526,7 @@ const ProfilePage = () => {
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center gap-4">
             <div className="relative">
-              <User className="h-16 w-16 text-blue-600" />
+              <User className="h-16 w-16 text-primary" />
               <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
                 <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
               </div>
