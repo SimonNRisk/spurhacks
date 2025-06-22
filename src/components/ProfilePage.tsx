@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Header from "./Header";
 import { BookingRequest, RequestModal } from "./RequestModal";
+import toast from "react-hot-toast";
 
 // Mock data with more detailed information
 const mockProfileData = {
@@ -387,10 +388,20 @@ const PendingRequestCard = ({
             </p>
           </div>
           <div className="flex flex-col space-y-2">
-            <button className="px-3 py-1 bg-white text-primary border-2 border-primary rounded-md hover:bg-primary-light text-sm">
+            <button
+              className="px-3 py-1 bg-white text-primary border-2 border-primary rounded-md hover:bg-primary-light text-sm"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            >
               Approve
             </button>
-            <button className="px-3 py-1 bg-white text-red-500 border border-red-500 rounded-md hover:bg-red-100 text-sm">
+            <button
+              className="px-3 py-1 bg-white text-red-500 border border-red-500 rounded-md hover:bg-red-100 text-sm"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            >
               Reject
             </button>
           </div>
@@ -518,6 +529,17 @@ const ProfilePage = () => {
     pendingRequests,
     yourRequests,
   } = profile;
+
+  const handleAction = (id: number, action: "approved" | "rejected") => {
+    toast.success(
+      `Request ${action === "approved" ? "approved" : "rejected"}!`
+    );
+    setProfile((prev) => ({
+      ...prev,
+      pendingRequests: prev.pendingRequests.filter((req) => req.id !== id),
+    }));
+    handleCloseModal();
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -710,6 +732,7 @@ const ProfilePage = () => {
         request={selectedRequest}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
+        onAction={handleAction}
       />
     </div>
   );
