@@ -11,16 +11,16 @@ export interface Listing {
   price: number;
   priceUnit: string;
   category: string;
-  image_url: string;
+  image: string;
   rating: number;
   reviewCount: number;
-  tags: string[];
   location: string;
   owner: {
     name: string;
     avatar: string;
   };
   availability: string;
+  tags: string[];
 }
 
 interface ListingCardProps {
@@ -46,11 +46,23 @@ const ListingCard = ({ listing }: ListingCardProps) => {
     >
       <div className="relative overflow-hidden">
         <img
-          src={listing.image_url}
+          src={listing.image}
           alt={listing.title}
           className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
         />
-        <div className="absolute top-3 left-3"></div>
+
+        {/* Database tags */}
+        <div className="absolute top-3 left-3 flex flex-wrap gap-1 z-10">
+          {listing.tags &&
+            listing.tags.slice(0, 3).map((tag, idx) => (
+              <Badge
+                key={idx}
+                className="bg-white/90 text-gray-800 text-xs font-medium"
+              >
+                {tag}
+              </Badge>
+            ))}
+        </div>
       </div>
 
       <CardContent className="p-4 flex flex-col flex-grow justify-between">

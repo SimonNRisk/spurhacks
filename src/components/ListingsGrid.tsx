@@ -13,48 +13,87 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 
+interface SearchTag {
+  text: string;
+  id: string;
+}
+
 interface ListingsGridProps {
   searchQuery: string;
   selectedCategory?: string;
   selectedLocation: string;
+  selectedTags: SearchTag[];
+  refreshTrigger?: number;
 }
 
-const ListingsGrid = ({ searchQuery, selectedLocation }: ListingsGridProps) => {
-  const [allListings, setAllListings] = useState<Listing[]>([]);
+const ListingsGrid = ({
+  searchQuery,
+  selectedLocation,
+  selectedTags,
+  refreshTrigger,
+}: ListingsGridProps) => {
+  const [allListings, setAllListings] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedMaxPrice, setSelectedMaxPrice] = useState<number | undefined>(
     1000
   );
   const [filtersVisible, setFiltersVisible] = useState(false);
 
-  console.log("listings", allListings);
-
   useEffect(() => {
     fetch("http://127.0.0.1:8000/")
       .then((res) => res.json())
       .then((data) => {
-        console.log("Raw fetched data:", data);
-
-        const transformed: Listing[] = data.map((item: any) => ({
-          id: item.id,
+        console.log("Fetched listings:", data);
+        const transformed = data.map((item) => ({
+          id: item.id.toString(),
           title: item.title,
           description: item.description,
           price: item.price,
-          location: item.location,
-          tags: item.tags,
-          image_url: item.image_url,
-          availability: item.availability,
+          priceUnit: "day",
+          category: item.tags[0],
+          image: item.image_url,
           rating: item.rating,
-          num_reviews: item.num_reviews,
+          reviewCount: item.num_reviews,
+          location: item.location,
+          owner: {
+            name: "John Doe", // placeholder
+            avatar: "https://source.unsplash.com/random/100x100/?face",
+          },
+          availability: item.availability,
+          tags: item.tags,
         }));
         setAllListings(transformed);
       })
       .catch((err) => console.error("Error fetching listings:", err));
-  }, []);
+  }, [refreshTrigger]);
 
   const filteredListings = useMemo(() => {
-    const filtered = filterListings(allListings, {
-      maxPrice: selectedMaxPrice !== undefined ? selectedMaxPrice : undefined,
+    // Normalize helper
+    const normalize = (str: string) =>
+      str.toLowerCase().trim().replace(/\s+/g, " ");
+
+    // Tag filter (if selectedTags are provided)
+    const tagFilter = (listing: Listing) => {
+      if (!selectedTags || selectedTags.length === 0) return true;
+      if (!listing.tags || listing.tags.length === 0) return false;
+
+      const normalizedSelectedTags = selectedTags.map((tag) =>
+        normalize(tag.text)
+      );
+      return listing.tags.some((listingTag) => {
+        const normalizedListingTag = normalize(listingTag);
+        return normalizedSelectedTags.some(
+          (sel) =>
+            normalizedListingTag.includes(sel) ||
+            sel.includes(normalizedListingTag) ||
+            normalizedListingTag === sel
+        );
+      });
+    };
+
+    // Price + category filter
+    const baseFiltered = filterListings(allListings, {
+      maxPrice: selectedMaxPrice,
       tag:
         selectedCategory !== "all" && selectedCategory !== ""
           ? selectedCategory
@@ -62,37 +101,56 @@ const ListingsGrid = ({ searchQuery, selectedLocation }: ListingsGridProps) => {
       minPrice: undefined,
       minRating: undefined,
       availability: undefined,
-    }).filter((listing) =>
-      searchQuery
-        ? listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          listing.description.toLowerCase().includes(searchQuery.toLowerCase())
-        : true
+    });
+
+    // Apply search text and tag filter
+    const fullyFiltered = baseFiltered.filter(
+      (listing) =>
+        tagFilter(listing) &&
+        (searchQuery
+          ? listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            listing.description
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase())
+          : true)
     );
 
-    const sorted = filtered.sort((a, b) => {
+    // Sort by proximity to Waterloo
+    const sorted = fullyFiltered.sort((a, b) => {
       const aNearby = a.location.toLowerCase().includes("waterloo");
       const bNearby = b.location.toLowerCase().includes("waterloo");
-
-      if (aNearby && !bNearby) return -1;
-      if (!aNearby && bNearby) return 1;
-      return 0;
+      return aNearby === bNearby ? 0 : aNearby ? -1 : 1;
     });
 
     return sorted;
-  }, [allListings, selectedCategory, selectedMaxPrice, searchQuery]);
+  }, [
+    allListings,
+    selectedTags,
+    selectedCategory,
+    selectedMaxPrice,
+    searchQuery,
+  ]);
 
   return (
     <section className="py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header + Filter Toggle */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
           <h2 className="text-2xl font-bold text-gray-900">
-            Available Items {selectedLocation === "nearby" && "(Nearby first)"}
+            {selectedTags.length > 0 ? "Filtered Results" : "Available Items"}
+            {selectedLocation === "nearby" && " (Nearby first)"}
           </h2>
 
-          <div className="flex items-center gap-2 text-gray-600">
+          <div className="flex flex-col md:flex-row gap-2 text-gray-600 md:items-center">
             <p className="whitespace-nowrap">
               {filteredListings.length} items available
             </p>
+            {selectedTags.length > 0 && (
+              <p className="text-sm text-blue-600 font-medium">
+                Showing results for:{" "}
+                {selectedTags.map((tag) => tag.text).join(", ")}
+              </p>
+            )}
             <button
               onClick={() => setFiltersVisible(!filtersVisible)}
               className="px-3 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-dark rounded"
@@ -150,22 +208,36 @@ const ListingsGrid = ({ searchQuery, selectedLocation }: ListingsGridProps) => {
           </div>
         </div>
 
-        {/* Listings Grid */}
-        {allListings.length === 0 ? (
+        {/* Listings Grid / Loading / Empty States */}
+        {filteredListings.length === 0 ? (
           <div className="flex items-center justify-center p-4">
             <div className="flex flex-col items-center space-y-6">
-              <div className="relative">
-                <div className="w-16 h-16 border-4 border-blue-200 rounded-full animate-pulse"></div>
-                <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-blue-600 border-r-blue-500 rounded-full animate-spin"></div>
-              </div>
-              <div className="text-center space-y-2">
-                <p className="text-xl font-medium text-slate-700">Loading...</p>
-              </div>
+              {allListings.length === 0 ? (
+                <>
+                  <div className="relative">
+                    <div className="w-16 h-16 border-4 border-blue-200 rounded-full animate-pulse"></div>
+                    <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-blue-600 border-r-blue-500 rounded-full animate-spin"></div>
+                  </div>
+                  <div className="text-center space-y-2">
+                    <p className="text-xl font-medium text-slate-700">
+                      Loading...
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center space-y-4">
+                  <div className="text-6xl text-gray-300">🔍</div>
+                  <div className="space-y-2">
+                    <p className="text-xl font-medium text-gray-700">
+                      No items found
+                    </p>
+                    <p className="text-gray-500">
+                      Try removing some tags or search for different items
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        ) : filteredListings.length === 0 ? (
-          <div className="text-center text-gray-500 py-10">
-            <p>No items match your filters.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

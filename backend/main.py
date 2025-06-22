@@ -16,11 +16,11 @@ dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
 load_dotenv(dotenv_path=dotenv_path)
 
 
-
 # Now that the path and env vars are set, we can import our modules
 from backend.scripts.tag_verification import verify_and_add_tags
 from backend.scripts.photo_tags import generate_details_from_image_bytes
-from backend.schemas import ListingCreate, Listing
+from backend.scripts.search_tags import classify_search_prompt
+from backend.schemas import ListingCreate, Listing, SearchPrompt, SearchResult
 
 # Initialize Supabase client using the loaded environment variables
 SUPABASE_URL=os.getenv("SUPABASE_URL")
@@ -33,6 +33,7 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from pydantic import BaseModel
+import random
 
 load_dotenv()
 url = os.getenv("SUPABASE_URL")
@@ -182,6 +183,139 @@ def create_reservation(reservation: ReservationRequest):
 
     return {"message": "Reservation request submitted successfully"}
 
+@app.get("/profile")
+def get_profile():
+    user_id = 1
+    user = supabase.table("users").select("*").eq("id", user_id).execute().data[0]
+    data = {}
+    data["name"] = user["fname"] + " " + user["lname"]
+
+    upcoming_rentals = []
+    today_str = datetime.today().strftime("%Y-%m-%d")
+    requests = supabase.table("requests")\
+        .select("*")\
+        .eq("requested_user", user_id)\
+        .gt("start_date", today_str)\
+        .eq("approve", 1)\
+        .execute()\
+        .data
+    
+    for request in requests:
+        item = supabase.table("listings").select("*").eq("id", request["item"]).execute().data[0]
+        owner = supabase.table("users").select("*").eq("id", item["user"]).execute().data[0]
+        curr = {
+            "id": request["id"],
+            "item": item["title"],
+            "start_date": request["start_date"],
+            "end_date": request["end_date"],
+            "renter": owner["fname"] + " " + owner["lname"],
+            "price": item["price"],
+            "status": "Confirmed",
+        }
+        upcoming_rentals.append(curr)
+    
+    data["upcoming_rentals"] = upcoming_rentals
+
+    past_rentals = []
+    requests = supabase.table("requests")\
+        .select("*")\
+        .eq("requested_user", user_id)\
+        .lt("start_date", today_str)\
+        .eq("approve", 1)\
+        .execute()\
+        .data
+    for request in requests:
+        item = supabase.table("listings").select("*").eq("id", request["item"]).execute().data[0]
+        owner = supabase.table("users").select("*").eq("id", item["user"]).execute().data[0]
+        curr = {
+            "id": request["id"],
+            "item": item["title"],
+            "start_date": request["start_date"],
+            "end_date": request["end_date"],
+            "renter": owner["fname"] + " " + owner["lname"],
+            "price": item["price"],
+            "status": "Rented",
+        }
+        past_rentals.append(curr)
+    
+    data["past_rentals"] = past_rentals
+
+    listed_items = []
+    requests = supabase.table("listings")\
+        .select("*")\
+        .eq("user", user_id)\
+        .execute()\
+        .data
+    tags = supabase.table("tags").select("*").execute().data
+    tag_lookup = {tag["id"]: tag["name"] for tag in tags}
+    for request in requests:
+
+        curr = {
+            "id": request["id"],
+            "name": request["title"],
+            "category": tag_lookup[request["tags"][0]],
+            "price": request["price"],
+            "status": 'active',
+            "views": random.randint(150, 300),
+            "bookings": random.randint(5, 15),
+        }
+        listed_items.append(curr)
+    
+    data["listed_items"] = listed_items
+
+    your_requests = []
+    requests = supabase.table("requests")\
+        .select("*")\
+        .eq("requested_user", user_id)\
+        .eq("approve", 0)\
+        .execute()\
+        .data
+    items = supabase.table("listings").select("*").execute().data
+    items_lookup = {item["id"]: item for item in items}
+    for request in requests:
+
+        curr = {
+            "id": request["id"],
+            "image": "https://ftwuonnxcfpinajqnacp.supabase.co/storage/v1/object/public/listings//" + items_lookup[request["item"]]["picture"],
+            "title": items_lookup[request["item"]]["title"],
+            "user": items_lookup[request["item"]]["user"],
+            "start_date": request["start_date"],
+            "end_date": request["end_date"],
+            "message": request["message"],
+        }
+        your_requests.append(curr)
+    
+    data["your_requests"] = your_requests
+
+    pending_requests = []
+    item_list = supabase.table("listings").select("*").eq("user", 1).execute().data
+    item_ids = [item["id"] for item in item_list]
+
+    requests = supabase.table("requests")\
+        .select("*")\
+        .eq("approve", 0)\
+        .in_("item", item_ids)\
+        .execute()\
+        .data
+    users = supabase.table("users").select("*").execute().data
+    users_lookup = {user["id"]: user for user in users}
+    for request in requests:
+
+        curr = {
+            "id": request["id"],
+            "image": "https://ftwuonnxcfpinajqnacp.supabase.co/storage/v1/object/public/listings//" + items_lookup[request["item"]]["picture"],
+            "title": items_lookup[request["item"]]["title"],
+            "user": users_lookup[request["requested_user"]]["fname"] + " " + users_lookup[request["requested_user"]]["lname"],
+            "start_date": request["start_date"],
+            "end_date": request["end_date"],
+            "message": request["message"],
+        }
+        pending_requests.append(curr)
+    
+    data["pending_requests"] = pending_requests
+
+    return data
+
 @app.get("/users")
 def get_users():
     return supabase.table("users").select("*").execute().data
@@ -228,6 +362,7 @@ async def generate_details_from_upload(file: UploadFile = File(...)):
         
         # 1. Generate description and tags from image
         details = generate_details_from_image_bytes(image_bytes)
+        title = details.get("title", "Generated Item")
         description = details.get("description", "No description generated.")
         initial_tags = details.get("tags", [])
 
@@ -254,6 +389,7 @@ async def generate_details_from_upload(file: UploadFile = File(...)):
         image_url = supabase.storage.from_(bucket_name).get_public_url(image_path)
         
         return {
+            "title": title,
             "description": description,
             "tags": verified_tags,
             "photo_url": image_url, # For frontend display
@@ -301,5 +437,24 @@ def create_listing(listing_data: ListingCreate):
     except Exception as e:
         # Catch potential exceptions from DB or logic
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+@app.post("/search/analyze", response_model=SearchResult)
+def analyze_search_prompt(search_data: SearchPrompt):
+    """
+    Analyzes a user's search prompt and returns relevant tags, description, and location.
+    This endpoint calls the search_tags.py functionality to process natural language queries.
+    """
+    try:
+        # Call the search_tags function to analyze the prompt
+        result = classify_search_prompt(search_data.prompt)
+        
+        return SearchResult(
+            tags=result.get("tags", []),
+            description=result.get("description", ""),
+            location=result.get("location", "unknown")
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to analyze search prompt: {str(e)}")
 
 
