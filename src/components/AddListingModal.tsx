@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Camera, Upload, Package, DollarSign, Loader2, X } from 'lucide-react';
+import { Camera, Upload, Package, DollarSign, Loader2, X } from "lucide-react";
 
 interface AddListingModalProps {
   isOpen: boolean;
@@ -17,30 +17,34 @@ interface AddListingModalProps {
   onListingCreated?: () => void;
 }
 
-const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalProps) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+const AddListingModal = ({
+  isOpen,
+  onClose,
+  onListingCreated,
+}: AddListingModalProps) => {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [tags, setTags] = useState<string[]>([]);
-  const [price, setPrice] = useState('');
-  const [quantity, setQuantity] = useState('1');
-  const [location, setLocation] = useState('');
+  const [price, setPrice] = useState("");
+  const [quantity, setQuantity] = useState("1");
+  const [location, setLocation] = useState("");
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [photoPath, setPhotoPath] = useState('');
+  const [photoPath, setPhotoPath] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const resetForm = () => {
-    setTitle('');
-    setDescription('');
+    setTitle("");
+    setDescription("");
     setTags([]);
-    setPrice('');
-    setQuantity('1');
-    setLocation('');
+    setPrice("");
+    setQuantity("1");
+    setLocation("");
     setUploadedImage(null);
-    setPhotoPath('');
+    setPhotoPath("");
     setIsGenerating(false);
     setIsUploading(false);
     setIsSubmitting(false);
@@ -50,13 +54,14 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
     if (!file) return;
 
     // Validate file type and size
-    if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file');
+    if (!file.type.startsWith("image/")) {
+      alert("Please upload an image file");
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) { // 10MB
-      alert('File size must be less than 10MB');
+    if (file.size > 10 * 1024 * 1024) {
+      // 10MB
+      alert("File size must be less than 10MB");
       return;
     }
 
@@ -66,30 +71,32 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
     try {
       // Create FormData for file upload
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
 
       // Call the generate-details endpoint
-      const response = await fetch('http://localhost:8000/listings/generate-details', {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await fetch(
+        "http://localhost:8000/listings/generate-details",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       if (!response.ok) {
-        throw new Error('Failed to generate listing details');
+        throw new Error("Failed to generate listing details");
       }
 
       const result = await response.json();
 
       // Auto-fill form fields with AI-generated content
-      setTitle(result.title || result.description?.split('.')[0] || ''); // Use AI title, fallback to first sentence
-      setDescription(result.description || '');
+      setTitle(result.title || result.description?.split(".")[0] || ""); // Use AI title, fallback to first sentence
+      setDescription(result.description || "");
       setTags(result.tags || []);
       setUploadedImage(result.photo_url);
       setPhotoPath(result.photo_path);
-
     } catch (error) {
-      console.error('Error generating listing details:', error);
-      alert('Failed to generate listing details. Please try again.');
+      console.error("Error generating listing details:", error);
+      alert("Failed to generate listing details. Please try again.");
     } finally {
       setIsUploading(false);
       setIsGenerating(false);
@@ -126,22 +133,22 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
   };
 
   const handleTagKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       const input = e.target as HTMLInputElement;
       addTag(input.value);
-      input.value = '';
+      input.value = "";
     }
   };
 
   const handleSubmit = async () => {
     if (!title || !description || !location || !price || tags.length === 0) {
-      alert('Please fill out all required fields');
+      alert("Please fill out all required fields");
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       const listingData = {
         title,
@@ -151,36 +158,35 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
         quantity,
         location,
         picture: photoPath,
-        user: 1 // TODO: Get actual user ID from auth context
+        user: 1, // TODO: Get actual user ID from auth context
       };
-      
-      const response = await fetch('http://localhost:8000/listings', {
-        method: 'POST',
+
+      const response = await fetch("http://localhost:8000/listings", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(listingData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to create listing');
+        throw new Error(errorData.detail || "Failed to create listing");
       }
 
       const createdListing = await response.json();
-      console.log('Listing created successfully:', createdListing);
-      
+      console.log("Listing created successfully:", createdListing);
+
       // Trigger refresh of listings grid if callback provided
       if (onListingCreated) {
         onListingCreated();
       }
-      
+
       // Reset form and close modal
       resetForm();
       onClose();
-      
     } catch (error) {
-      console.error('Error creating listing:', error);
+      console.error("Error creating listing:", error);
       alert(`Failed to create listing: ${error.message}`);
     } finally {
       setIsSubmitting(false);
@@ -195,8 +201,7 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white">
-        {/* Header with blue background */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 -m-6 mb-6 rounded-t-lg">
+        <div className="bg-primary text-white p-6 -m-6 mb-6 rounded-t-lg">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-white flex items-center gap-2">
               Add New Listing
@@ -206,21 +211,21 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
 
         <div className="space-y-6 px-2">
           {/* Photo Upload Section */}
-          <div 
+          <div
             className={`text-center border-2 border-dashed rounded-lg transition-colors cursor-pointer relative ${
-              uploadedImage 
-                ? 'border-blue-300 bg-blue-50' 
-                : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
-            } ${isUploading ? 'pointer-events-none' : ''}`}
+              uploadedImage
+                ? "border-blue-300 bg-blue-50"
+                : "border-gray-300 bg-gray-50 hover:bg-gray-100"
+            } ${isUploading ? "pointer-events-none" : ""}`}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onClick={() => !isUploading && fileInputRef.current?.click()}
           >
             {uploadedImage ? (
               <div className="relative">
-                <img 
-                  src={uploadedImage} 
-                  alt="Uploaded item" 
+                <img
+                  src={uploadedImage}
+                  alt="Uploaded item"
                   className="w-full h-48 object-cover rounded-lg"
                 />
                 <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
@@ -233,7 +238,7 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
             ) : (
               <div className="py-12">
                 <div className="flex flex-col items-center gap-4">
-                  <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
+                  <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
                     {isUploading ? (
                       <Loader2 className="h-8 w-8 text-white animate-spin" />
                     ) : (
@@ -242,19 +247,20 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      {isUploading ? 'Processing Image...' : 'Upload Item Photo'}
+                      {isUploading
+                        ? "Processing Image..."
+                        : "Upload Item Photo"}
                     </h3>
                     <p className="text-gray-600">
-                      {isUploading 
-                        ? 'AI is analyzing your image and generating details...'
-                        : 'Drag & drop or click to browse (JPG, PNG up to 10MB)'
-                      }
+                      {isUploading
+                        ? "AI is analyzing your image and generating details..."
+                        : "Drag & drop or click to browse (JPG, PNG up to 10MB)"}
                     </p>
                   </div>
                 </div>
               </div>
             )}
-            
+
             <input
               ref={fileInputRef}
               type="file"
@@ -269,14 +275,22 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
               <Package className="h-5 w-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Item Details</h3>
-              <Badge className="bg-blue-100 text-blue-800 text-xs">AI ENHANCED</Badge>
-              {isGenerating && <Loader2 className="h-4 w-4 animate-spin text-blue-600" />}
+              <h3 className="text-lg font-semibold text-gray-900">
+                Item Details
+              </h3>
+              <Badge className="bg-primary-light border-2 border-primary text-black text-xs">
+                AI Enhanced
+              </Badge>
+              {isGenerating && (
+                <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+              )}
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Title
+                </label>
                 <Input
                   type="text"
                   placeholder="AI will suggest a title based on your image"
@@ -288,7 +302,9 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description
+                </label>
                 <Textarea
                   placeholder="AI will generate a detailed description"
                   value={description}
@@ -299,14 +315,16 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tags
+                </label>
                 <div className="space-y-2">
                   {tags.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {tags.map((tag, index) => (
-                        <Badge 
-                          key={index} 
-                          variant="secondary" 
+                        <Badge
+                          key={index}
+                          variant="secondary"
                           className="bg-blue-100 text-blue-800 flex items-center gap-1"
                         >
                           {tag}
@@ -337,12 +355,16 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
               <DollarSign className="h-5 w-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Rental Details</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Rental Details
+              </h3>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Price per Day ($)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Price per Day ($)
+                </label>
                 <Input
                   type="number"
                   placeholder="25.00"
@@ -353,7 +375,9 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Available Quantity</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Available Quantity
+                </label>
                 <Input
                   type="number"
                   placeholder="1"
@@ -365,7 +389,9 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Location
+              </label>
               <Input
                 type="text"
                 placeholder="Waterloo, Ontario"
@@ -390,7 +416,15 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
           <Button
             onClick={handleSubmit}
             className="bg-blue-600 hover:bg-blue-700 text-white px-8"
-            disabled={isGenerating || isSubmitting || !title || !description || !location || !price || tags.length === 0}
+            disabled={
+              isGenerating ||
+              isSubmitting ||
+              !title ||
+              !description ||
+              !location ||
+              !price ||
+              tags.length === 0
+            }
           >
             {isSubmitting ? (
               <>
@@ -398,9 +432,9 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
                 Creating...
               </>
             ) : isGenerating ? (
-              'Generating...'
+              "Generating..."
             ) : (
-              'List Item'
+              "List Item"
             )}
           </Button>
         </div>
@@ -409,4 +443,4 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
   );
 };
 
-export default AddListingModal; 
+export default AddListingModal;
