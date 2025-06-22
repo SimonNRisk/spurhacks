@@ -26,7 +26,7 @@ const Header = ({ onListingCreated }: HeaderProps) => {
                 <PlusCircle className="h-4 w-4" />
                 <span>List Item</span>
               </Button>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" onClick={() => window.location.href = '/profile'}>
                 <User className="h-4 w-4" />
               </Button>
             </div>
