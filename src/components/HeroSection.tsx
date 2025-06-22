@@ -95,7 +95,7 @@ const HeroSection = ({
         <div className="max-w-2xl mx-auto">
           <div className="bg-white rounded-lg p-2 shadow-lg">
             {/* Search Input Row */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1 relative">
                 <Search
                   className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 transition-colors ${
