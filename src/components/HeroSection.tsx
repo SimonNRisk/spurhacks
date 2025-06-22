@@ -147,9 +147,12 @@ const HeroSection = ({
                   <Badge
                     key={tag.id}
                     variant="secondary"
-                    className="bg-blue-100 text-blue-800 hover:bg-blue-200 cursor-pointer flex items-center gap-1 px-3 py-1"
+                    className="bg-primary-light border-2 border-primary text-black hover:bg-blue-200 cursor-pointer flex items-center gap-1 px-3 py-1"
                   >
-                    <span className="text-sm">{tag.text}</span>
+                    <span className="text-sm">
+                      {" "}
+                      {tag.text.replace(/\b\w/g, (char) => char.toUpperCase())}
+                    </span>
                     <button
                       onClick={() => removeTag(tag.id)}
                       className="ml-1 hover:bg-blue-300 rounded-full p-0.5 transition-colors"

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Camera, Upload, Package, DollarSign, Loader2, X, MapPin, Sparkles } from 'lucide-react';
+import {
+  Camera,
+  Upload,
+  Package,
+  DollarSign,
+  Loader2,
+  X,
+  MapPin,
+  Sparkles,
+} from "lucide-react";
 
 interface AddListingModalProps {
   isOpen: boolean;
@@ -17,30 +26,34 @@ interface AddListingModalProps {
   onListingCreated?: () => void;
 }
 
-const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalProps) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+const AddListingModal = ({
+  isOpen,
+  onClose,
+  onListingCreated,
+}: AddListingModalProps) => {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [tags, setTags] = useState<string[]>([]);
-  const [price, setPrice] = useState('');
-  const [quantity, setQuantity] = useState('1');
-  const [location, setLocation] = useState('');
+  const [price, setPrice] = useState("");
+  const [quantity, setQuantity] = useState("1");
+  const [location, setLocation] = useState("");
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [photoPath, setPhotoPath] = useState('');
+  const [photoPath, setPhotoPath] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const resetForm = () => {
-    setTitle('');
-    setDescription('');
+    setTitle("");
+    setDescription("");
     setTags([]);
-    setPrice('');
-    setQuantity('1');
-    setLocation('');
+    setPrice("");
+    setQuantity("1");
+    setLocation("");
     setUploadedImage(null);
-    setPhotoPath('');
+    setPhotoPath("");
     setIsGenerating(false);
     setIsUploading(false);
     setIsSubmitting(false);
@@ -49,13 +62,13 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
   const handleFileUpload = async (file: File) => {
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file');
+    if (!file.type.startsWith("image/")) {
+      alert("Please upload an image file");
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      alert('File size must be less than 10MB');
+      alert("File size must be less than 10MB");
       return;
     }
 
@@ -64,28 +77,30 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
 
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
 
-      const response = await fetch('http://localhost:8000/listings/generate-details', {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await fetch(
+        "http://localhost:8000/listings/generate-details",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       if (!response.ok) {
-        throw new Error('Failed to generate listing details');
+        throw new Error("Failed to generate listing details");
       }
 
       const result = await response.json();
 
-      setTitle(result.title || result.description?.split('.')[0] || '');
-      setDescription(result.description || '');
+      setTitle(result.title || result.description?.split(".")[0] || "");
+      setDescription(result.description || "");
       setTags(result.tags || []);
       setUploadedImage(result.photo_url);
       setPhotoPath(result.photo_path);
-
     } catch (error) {
-      console.error('Error generating listing details:', error);
-      alert('Failed to generate listing details. Please try again.');
+      console.error("Error generating listing details:", error);
+      alert("Failed to generate listing details. Please try again.");
     } finally {
       setIsUploading(false);
       setIsGenerating(false);
@@ -122,22 +137,22 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
   };
 
   const handleTagKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       const input = e.target as HTMLInputElement;
       addTag(input.value);
-      input.value = '';
+      input.value = "";
     }
   };
 
   const handleSubmit = async () => {
     if (!title || !description || !location || !price || tags.length === 0) {
-      alert('Please fill out all required fields');
+      alert("Please fill out all required fields");
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       const listingData = {
         title,
@@ -147,34 +162,33 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
         quantity,
         location,
         picture: photoPath,
-        user: 1
+        user: 1,
       };
-      
-      const response = await fetch('http://localhost:8000/listings', {
-        method: 'POST',
+
+      const response = await fetch("http://localhost:8000/listings", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(listingData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to create listing');
+        throw new Error(errorData.detail || "Failed to create listing");
       }
 
       const createdListing = await response.json();
-      console.log('Listing created successfully:', createdListing);
-      
+      console.log("Listing created successfully:", createdListing);
+
       if (onListingCreated) {
         onListingCreated();
       }
-      
+
       resetForm();
       onClose();
-      
     } catch (error) {
-      console.error('Error creating listing:', error);
+      console.error("Error creating listing:", error);
       alert(`Failed to create listing: ${error.message}`);
     } finally {
       setIsSubmitting(false);
@@ -209,8 +223,12 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
                 <Camera className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Add Photos</h3>
-                <p className="text-sm text-gray-500">Upload clear photos of your item</p>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Add Photos
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Upload clear photos of your item
+                </p>
               </div>
               {isGenerating && (
                 <Badge className="bg-primary/10 text-primary border-primary/20 ml-auto">
@@ -220,21 +238,21 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
               )}
             </div>
 
-            <div 
+            <div
               className={`relative border-2 border-dashed rounded-xl transition-all cursor-pointer group ${
-                uploadedImage 
-                  ? 'border-primary/30 bg-primary/5' 
-                  : 'border-gray-300 bg-gray-50 hover:bg-gray-100 hover:border-primary/50'
-              } ${isUploading ? 'pointer-events-none' : ''}`}
+                uploadedImage
+                  ? "border-primary/30 bg-primary/5"
+                  : "border-gray-300 bg-gray-50 hover:bg-gray-100 hover:border-primary/50"
+              } ${isUploading ? "pointer-events-none" : ""}`}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onClick={() => !isUploading && fileInputRef.current?.click()}
             >
               {uploadedImage ? (
                 <div className="relative overflow-hidden rounded-lg">
-                  <img 
-                    src={uploadedImage} 
-                    alt="Uploaded item" 
+                  <img
+                    src={uploadedImage}
+                    alt="Uploaded item"
                     className="w-full h-64 object-cover"
                   />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -256,13 +274,14 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
                     </div>
                     <div>
                       <h4 className="text-xl font-semibold text-gray-900 mb-2">
-                        {isUploading ? 'Processing Your Photo...' : 'Upload Item Photo'}
+                        {isUploading
+                          ? "Processing Your Photo..."
+                          : "Upload Item Photo"}
                       </h4>
                       <p className="text-gray-600 max-w-sm mx-auto">
-                        {isUploading 
-                          ? 'AI is analyzing your image and generating details automatically'
-                          : 'Drag & drop your photo here, or click to browse'
-                        }
+                        {isUploading
+                          ? "AI is analyzing your image and generating details automatically"
+                          : "Drag & drop your photo here, or click to browse"}
                       </p>
                       <p className="text-sm text-gray-400 mt-2">
                         JPG, PNG up to 10MB
@@ -271,7 +290,7 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
                   </div>
                 </div>
               )}
-              
+
               <input
                 ref={fileInputRef}
                 type="file"
@@ -290,7 +309,9 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
                 <Package className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Item Details</h3>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Item Details
+                </h3>
                 <p className="text-sm text-gray-500">Tell us about your item</p>
               </div>
             </div>
@@ -331,8 +352,8 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
                   {tags.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {tags.map((tag, index) => (
-                        <Badge 
-                          key={index} 
+                        <Badge
+                          key={index}
                           className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-colors px-3 py-1 text-sm flex items-center gap-2"
                         >
                           {tag}
@@ -366,8 +387,12 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
                 <DollarSign className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Rental Details</h3>
-                <p className="text-sm text-gray-500">Set your pricing and availability</p>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Rental Details
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Set your pricing and availability
+                </p>
               </div>
             </div>
 
@@ -422,9 +447,7 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
 
         {/* Footer */}
         <div className="flex justify-between items-center p-6 border-t border-gray-100 bg-gray-50/50">
-          <p className="text-sm text-gray-500">
-            * Required fields
-          </p>
+          <p className="text-sm text-gray-500">* Required fields</p>
           <div className="flex gap-3">
             <Button
               variant="outline"
@@ -437,7 +460,15 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
             <Button
               onClick={handleSubmit}
               className="bg-primary hover:bg-primary-dark text-white px-8 h-11 font-semibold shadow-lg"
-              disabled={isGenerating || isSubmitting || !title || !description || !location || !price || tags.length === 0}
+              disabled={
+                isGenerating ||
+                isSubmitting ||
+                !title ||
+                !description ||
+                !location ||
+                !price ||
+                tags.length === 0
+              }
             >
               {isSubmitting ? (
                 <>
@@ -450,7 +481,7 @@ const AddListingModal = ({ isOpen, onClose, onListingCreated }: AddListingModalP
                   AI Processing...
                 </>
               ) : (
-                'List My Item'
+                "List My Item"
               )}
             </Button>
           </div>

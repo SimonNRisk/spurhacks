@@ -104,3 +104,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+.rdp-day_booked {
+  background-color: rgba(23, 107, 130, 0.6);
+  color: white;
+  border-radius: 0.375rem;
+}
